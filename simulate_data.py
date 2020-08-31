@@ -1,11 +1,22 @@
 import numpy as np
 import pandas as pd
-
+import argparse
+from os import path
 from sympy.solvers import solve
 from sympy import Symbol
 import scipy.stats as sstats
 
 from utils import SimulateData
+
+
+def get_args():
+    parser = argparse.ArgumentParser(description='ABCD data simulations')
+    parser.add_argument('--n_subjects', default=1000)
+    parser.add_argument('--n_trials', default=1000)
+    parser.add_argument('--out_dir', default='./Simulated_Data',
+                        help='location to save simulated data')
+    args = parser.parse_args()
+    return(args)
 
 
 def generate_exgauss_sampler_from_fit(data,
@@ -24,6 +35,8 @@ def generate_exgauss_sampler_from_fit(data,
 
 
 if __name__ == '__main__':
+    args = get_args()
+
     # GET ABCD INFO
     abcd_data = pd.read_csv('minimal_abcd_no_issue_3.csv')
 
@@ -60,8 +73,7 @@ if __name__ == '__main__':
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
     # SIMULATE
-    NSUBJECTS = 75
-    subjects = np.arange(0, NSUBJECTS)
+    subjects = np.arange(0, args.n_subjects)
 
     simulator_dict = {
         'vanilla': SimulateData(),
@@ -77,7 +89,7 @@ if __name__ == '__main__':
 
     for subject in subjects:
         params = {
-            'n_trials': 50,
+            'n_trials': args.n_trials,
             'SSDs': SSDs,
             'mu_go': np.random.normal(.2, scale=.03),
             'mu_stop': np.random.normal(.65, scale=.03),
@@ -95,6 +107,6 @@ if __name__ == '__main__':
     for stim_key in group_data_dict:
         curr_group = group_data_dict[stim_key].copy()
         curr_group['simulation'] = stim_key
-        curr_group.to_csv('Simulated_Data/%s.csv' % stim_key)
+        curr_group.to_csv('%s/%s.csv' % (args.out_dir, stim_key))
         full_data = pd.concat([full_data, curr_group])
-    full_data.to_csv('Simulated_Data/full.csv')
+    full_data.to_csv('%s/full.csv' % args.out_dir)

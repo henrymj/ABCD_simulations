@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=ABCD_sim
+#SBATCH --output=.out/ABCD_sim_%j.out
+#SBATCH --error=.err/ABCD_%j.err
+#SBATCH --time=4:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-user=poldracklab@stanford.edu
+#SBATCH --cpus-per-task=16
+#SBATCH --ntasks-per-node=1
+#SBATCH -p russpold,hns
+#SBATCH --exclude=sh02-06n01,sh02-06n02
+export PYTHONPATH=""
+
+python simulate_data.py
