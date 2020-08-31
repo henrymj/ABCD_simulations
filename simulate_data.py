@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import argparse
-from os import path
 from sympy.solvers import solve
 from sympy import Symbol
 import scipy.stats as sstats
@@ -91,8 +90,8 @@ if __name__ == '__main__':
         params = {
             'n_trials': args.n_trials,
             'SSDs': SSDs,
-            'mu_go': np.random.normal(.2, scale=.03),
-            'mu_stop': np.random.normal(.65, scale=.03),
+            'mu_go': np.random.normal(.25, scale=.05),
+            'mu_stop': np.random.normal(.6, scale=.05),
             'guess_function': sample_exgauss,
             'p_guess': p_guess_per_SSD
         }
