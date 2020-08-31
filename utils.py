@@ -232,8 +232,8 @@ class SimulateData():
                             
     def _add_param_defaults(self, params):
         # TODO: move default dict to json, read in
-        default_dict = {'mu_go':.2,
-                        'mu_stop':.65,
+        default_dict = {'mu_go': .2,
+                        'mu_stop': .65,
                         'noise_go': 1,
                         'noise_stop': 1.3,
                         'threshold':95,
