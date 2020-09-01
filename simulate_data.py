@@ -10,8 +10,8 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_subjects', default=1000)
-    parser.add_argument('--n_trials', default=1000)
+    parser.add_argument('--n_subjects', default=500)
+    parser.add_argument('--n_trials', default=500)
     parser.add_argument('--out_dir', default='./Simulated_Data',
                         help='location to save simulated data')
     args = parser.parse_args()
@@ -102,10 +102,7 @@ if __name__ == '__main__':
                 [group_data_dict[sim_key], data],
                 0)
 
-    full_data = pd.DataFrame()
     for stim_key in group_data_dict:
         curr_group = group_data_dict[stim_key].copy()
         curr_group['simulation'] = stim_key
         curr_group.to_csv('%s/%s.csv' % (args.out_dir, stim_key))
-        full_data = pd.concat([full_data, curr_group])
-    full_data.to_csv('%s/full.csv' % args.out_dir)
