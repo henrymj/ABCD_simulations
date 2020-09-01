@@ -45,7 +45,7 @@ if __name__ == '__main__':
     acc_per_SSD = pd.DataFrame()
     for ssd in SSDs:
         curr_means = abcd_data.query(
-            f"SSDDur == {ssd} and correct_stop==0.0"
+            "SSDDur == %s and correct_stop==0.0" % ssd
         ).groupby('NARGUID').mean()['choice_accuracy']
         curr_means.name = ssd
         acc_per_SSD = pd.concat([acc_per_SSD, curr_means], 1, sort=True)
