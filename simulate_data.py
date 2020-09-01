@@ -21,8 +21,8 @@ def get_args():
 def generate_exgauss_sampler_from_fit(data,
                                       default_sample_size=100000):
     FIT_K, FIT_LOC, FIT_SCALE = sstats.exponnorm.fit(data)
-    FIT_λ = 1/(FIT_K*FIT_SCALE)
-    FIT_BETA = 1/FIT_λ
+    FIT_LAMBDA = 1/(FIT_K*FIT_SCALE)
+    FIT_BETA = 1/FIT_LAMBDA
 
     def sample_exgauss(sample_size=default_sample_size,
                        beta=FIT_BETA, scale=FIT_SCALE, loc=FIT_LOC):
