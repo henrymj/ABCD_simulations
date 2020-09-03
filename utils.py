@@ -237,7 +237,7 @@ class SimulateData():
     def _linear_mu_go(self, mu_go, SSD, max_SSD=550):
         if SSD > max_SSD:
             SSD = max_SSD
-        return self.at_least_0((SSD/max_SSD) * mu_go)
+        return self._at_least_0((SSD/max_SSD) * mu_go)
 
     def _init_params(self, params):
         # TODO: move default dict to json, read in
