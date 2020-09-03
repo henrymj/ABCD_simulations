@@ -14,7 +14,6 @@ matplotlib.use('Agg')
 def get_args():
     parser = argparse.ArgumentParser(description='simulation visualization')
     parser.add_argument("--sim_types",
-                        action="extend",
                         nargs="+",
                         default=['vanilla', 'guesses', 'graded_mu_go'])
     parser.add_argument('--sim_dir',
