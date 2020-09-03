@@ -1,4 +1,5 @@
 *.csv
 .out
 .err
+.ipynb_checkpoints
 __pycache__

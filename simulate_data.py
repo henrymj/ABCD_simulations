@@ -10,8 +10,8 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_subjects', default=500)
-    parser.add_argument('--n_trials', default=500)
+    parser.add_argument('--n_subjects', default=300)
+    parser.add_argument('--n_trials', default=600)
     parser.add_argument('--out_dir', default='./Simulated_Data',
                         help='location to save simulated data')
     args = parser.parse_args()

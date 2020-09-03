@@ -46,33 +46,39 @@ class SimulateData():
         guess_RTs = params['guess_function'](
             int(self._n_guesses[ssd_idx])
         )
-        if SSD is None:
-            for trial_idx, guess_RT in enumerate(guess_RTs):
-                trial = self._init_trial_dict(params, trial_idx)
-                trial['RT'] = guess_RT
-                data_dict = self._update_data_dict(data_dict, trial)
-        else:
-            stop_init_time = SSD + params['nondecision_stop']
-            for trial_idx, guess_RT in enumerate(guess_RTs):
-                trial = self._init_trial_dict(params, trial_idx,
-                                              SSD=SSD,
-                                              stop_init_time=stop_init_time)
-                stop_accum = 0
-                for time in range(1, trial['max_time']+1):
-                    if time >= trial['stop_init_time']:
-                        stop_accum = self._at_least_0(
-                            stop_accum + trial['mu_stop'] +
-                            np.random.normal(loc=0, scale=trial['noise_stop'])
-                        )
-                        trial['process_stop'].append(stop_accum)
-                    if stop_accum > trial['threshold']:
-                        break
+        for trial_idx, guess_RT in enumerate(guess_RTs):
+            trial = self._init_trial_dict(params, trial_idx,
+                                          SSD=SSD)
+            trial['RT'] = guess_RT
+            data_dict = self._update_data_dict(data_dict, trial)
 
-                if guess_RT <= time:
-                    trial['RT'] = guess_RT
+        # if SSD is None:
+        #     for trial_idx, guess_RT in enumerate(guess_RTs):
+        #         trial = self._init_trial_dict(params, trial_idx)
+        #         trial['RT'] = guess_RT
+        #         data_dict = self._update_data_dict(data_dict, trial)
+        # else:
+        #     stop_init_time = SSD + params['nondecision_stop']
+        #     for trial_idx, guess_RT in enumerate(guess_RTs):
+        #         trial = self._init_trial_dict(params, trial_idx,
+        #                                       SSD=SSD,
+        #                                       stop_init_time=stop_init_time)
+        #         stop_accum = 0
+        #         for time in range(1, trial['max_time']+1):
+        #             if time >= trial['stop_init_time']:
+        #                 stop_accum = self._at_least_0(
+        #                     stop_accum + trial['mu_stop'] +
+        #                     np.random.normal(loc=0, scale=trial['noise_stop'])
+        #                 )
+        #                 trial['process_stop'].append(stop_accum)
+        #             if stop_accum > trial['threshold']:
+        #                 break
 
-                trial['accum_stop'] = stop_accum
-                data_dict = self._update_data_dict(data_dict, trial)
+        #         if guess_RT <= time:
+        #             trial['RT'] = guess_RT
+
+        #         trial['accum_stop'] = stop_accum
+        #         data_dict = self._update_data_dict(data_dict, trial)
         return data_dict
 
     def _simulate_stop_trials(self, data_dict, params, SSD, ssd_idx):
@@ -227,7 +233,7 @@ class SimulateData():
     def _log_mu_go(self, mu_go, SSD, max_SSD=550):
         if SSD > max_SSD:
             SSD = max_SSD
-        return self._at_least_0((np.log(SSD)/np.log(max_SSD)) * mu_go)
+        return self._at_least_0((np.log(SSD/max_SSD)/4+1) * mu_go)
 
 #     def _linear_mu_go(self, mu_go, SSD, max_SSD=550):
 #         if SSD > max_SSD:
