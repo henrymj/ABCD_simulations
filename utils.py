@@ -22,7 +22,7 @@ class SimulateData():
         self._trial_iter = trial_iterators[model]
 
     def simulate(self, params={}):
-        params = self.init_params(params)
+        params = self._init_params(params)
         data_dict = self._init_data_dict()
         self._set_n_guesses_per_type(params)
         for ssd_idx, SSD in enumerate(params['SSDs']):
