@@ -10,8 +10,8 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_subjects', default=300)
-    parser.add_argument('--n_trials', default=600)
+    parser.add_argument('--n_subjects', default=250)
+    parser.add_argument('--n_trials', default=650)
     parser.add_argument('--out_dir', default='./Simulated_Data',
                         help='location to save simulated data')
     args = parser.parse_args()
@@ -77,13 +77,15 @@ if __name__ == '__main__':
     simulator_dict = {
         'vanilla': SimulateData(),
         'guesses': SimulateData(guesses=True),
-        'graded_mu_go': SimulateData(graded_mu_go=True)
+        'log': SimulateData(graded_mu_go=True),
+        'linear': SimulateData(graded_mu_go=True)
     }
 
     group_data_dict = {
         'vanilla': pd.DataFrame(),
         'guesses': pd.DataFrame(),
-        'graded_mu_go': pd.DataFrame()
+        'log': pd.DataFrame(),
+        'linear': pd.DataFrame(),
     }
 
     for subject in subjects:
@@ -93,9 +95,10 @@ if __name__ == '__main__':
             'mu_go': np.random.normal(.25, scale=.05),
             'mu_stop': np.random.normal(.6, scale=.05),
             'guess_function': sample_exgauss,
-            'p_guess': p_guess_per_SSD
+            'p_guess': p_guess_per_SSD,
         }
         for sim_key in simulator_dict:
+            params['mu_go_grader'] = sim_key
             data = simulator_dict[sim_key].simulate(params)
             data['ID'] = subject
             group_data_dict[sim_key] = pd.concat(

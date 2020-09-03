@@ -22,7 +22,7 @@ class SimulateData():
         self._trial_iter = trial_iterators[model]
 
     def simulate(self, params={}):
-        params = self._add_param_defaults(params)
+        params = self.init_params(params)
         data_dict = self._init_data_dict()
         self._set_n_guesses_per_type(params)
         for ssd_idx, SSD in enumerate(params['SSDs']):
@@ -51,7 +51,6 @@ class SimulateData():
                                           SSD=SSD)
             trial['RT'] = guess_RT
             data_dict = self._update_data_dict(data_dict, trial)
-
         # if SSD is None:
         #     for trial_idx, guess_RT in enumerate(guess_RTs):
         #         trial = self._init_trial_dict(params, trial_idx)
@@ -227,7 +226,7 @@ class SimulateData():
         # TODO: make more dynamic, pass max_SSD
         mu_go = params['mu_go']
         if self.graded_mu_go and SSD is not None:
-            mu_go = self._log_mu_go(mu_go, SSD)
+            mu_go = self._mu_go_grader(mu_go, SSD)
         return mu_go
 
     def _log_mu_go(self, mu_go, SSD, max_SSD=550):
@@ -235,12 +234,12 @@ class SimulateData():
             SSD = max_SSD
         return self._at_least_0((np.log(SSD/max_SSD)/4+1) * mu_go)
 
-#     def _linear_mu_go(self, mu_go, SSD, max_SSD=550):
-#         if SSD > max_SSD:
-#             SSD = max_SSD
-#         return self.at_least_0((SSD/max_SSD) * mu_go)
+    def _linear_mu_go(self, mu_go, SSD, max_SSD=550):
+        if SSD > max_SSD:
+            SSD = max_SSD
+        return self.at_least_0((SSD/max_SSD) * mu_go)
 
-    def _add_param_defaults(self, params):
+    def _init_params(self, params):
         # TODO: move default dict to json, read in
         default_dict = {'mu_go': .25,
                         'mu_stop': .6,
@@ -257,11 +256,20 @@ class SimulateData():
                         'p_guess': 0,
                         'guess_function': lambda x: np.random.uniform(
                             200, 400, x),
+                        'mu_go_grader': 'log'
                         }
 
         for key in default_dict:
             if key not in params:
                 params[key] = default_dict[key]
+
+        if self.graded_mu_go:
+            mu_go_graders = {
+                'log': self._log_mu_go,
+                'linear': self._linear_mu_go,
+            }
+            self._mu_go_grader = mu_go_graders[params['mu_go_grader']]
+
         return params
 
     def _init_data_dict(self):
