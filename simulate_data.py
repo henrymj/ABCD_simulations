@@ -102,7 +102,7 @@ if __name__ == '__main__':
                 [group_data_dict[sim_key], data],
                 0)
 
-    for stim_key in group_data_dict:
-        curr_group = group_data_dict[stim_key].copy()
-        curr_group['simulation'] = stim_key
-        curr_group.to_csv('%s/%s.csv' % (args.out_dir, stim_key))
+    for sim_key in group_data_dict:
+        curr_group = group_data_dict[sim_key].copy()
+        curr_group['simulation'] = sim_key
+        curr_group.to_csv('%s/%s.csv' % (args.out_dir, sim_key))
