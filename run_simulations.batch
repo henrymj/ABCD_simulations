@@ -7,7 +7,6 @@
 #SBATCH --mail-user=poldracklab@stanford.edu
 #SBATCH --cpus-per-task=16
 #SBATCH --ntasks-per-node=1
-#SBATCH --mem=180GB
 #SBATCH -p russpold,hns
 #SBATCH --exclude=sh02-06n01,sh02-06n02
 export PYTHONPATH=""
