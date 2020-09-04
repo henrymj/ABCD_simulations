@@ -1,4 +1,4 @@
-*.csv
+*data/*.csv
 .out
 .err
 .ipynb_checkpoints
