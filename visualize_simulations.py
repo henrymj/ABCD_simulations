@@ -15,7 +15,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='simulation visualization')
     parser.add_argument("--sim_types",
                         nargs="+",
-                        default=['vanilla', 'guesses', 'graded_mu_go'])
+                        default=['vanilla', 'guesses', 'log', 'linear'])
     parser.add_argument('--sim_dir',
                         default='./Simulated_Data',
                         help='location of simulated data')
