@@ -79,28 +79,27 @@ if __name__ == '__main__':
     simulator_dict = {
         'vanilla': SimulateData(),
         'guesses': SimulateData(guesses=True),
-        'log': SimulateData(graded_mu_go=True),
-        'linear': SimulateData(graded_mu_go=True)
+        'graded_mu_go_log': SimulateData(graded_mu_go='log'),
+        'graded_mu_go_linear': SimulateData(graded_mu_go='linear')
     }
 
     group_data_dict = {
         'vanilla': pd.DataFrame(),
         'guesses': pd.DataFrame(),
-        'log': pd.DataFrame(),
-        'linear': pd.DataFrame(),
+        'graded_mu_go_log': pd.DataFrame(),
+        'graded_mu_go_linear': pd.DataFrame(),
     }
 
     for subject in subjects:
         params = {
             'n_trials': args.n_trials,
             'SSDs': SSDs,
-            'mu_go': np.random.normal(.25, scale=.05),
+            'mu_go': np.random.normal(.2, scale=.05),
             'mu_stop': np.random.normal(.6, scale=.05),
             'guess_function': sample_exgauss,
             'p_guess': p_guess_per_SSD,
         }
         for sim_key in simulator_dict:
-            params['mu_go_grader'] = sim_key
             data = simulator_dict[sim_key].simulate(params)
             data['ID'] = subject
             group_data_dict[sim_key] = pd.concat(

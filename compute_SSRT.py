@@ -6,9 +6,6 @@ from stopsignalmetrics import SSRTmodel
 
 def get_args():
     parser = argparse.ArgumentParser(description='simulation visualization')
-    parser.add_argument("--sim_types",
-                        nargs="+",
-                        default=['vanilla', 'guesses', 'log', 'linear'])
     parser.add_argument('--sim_dir',
                         default='./simulated_data',
                         help='location of simulated data')
@@ -25,7 +22,9 @@ if __name__ == '__main__':
 
     args = get_args()
     ssrtmodel = SSRTmodel(model=args.ssrt_model)
-    for sim in args.sim_types:
-        sim_df = pd.read_csv('%s/%s.csv' % (args.sim_dir, sim))
+
+    for sim_file in glob(path.join(args.sim_dir, '*')):
+        sim_key = sim_file.split('/')[-1].replace('.csv', '')
+        sim_df = pd.read_csv(sim_file)
         metrics_df = ssrtmodel.fit_transform(sim_df, level='group')
-        metrics_df.to_csv('%s/%s.csv' % (args.out_dir, sim))
+        metrics_df.to_csv('%s/%s.csv' % (args.out_dir, sim_key))

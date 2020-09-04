@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 import argparse
-
+from glob import glob
+from os import path
 from utils import joyplot
 
 import matplotlib.pyplot as plt
@@ -13,9 +14,6 @@ matplotlib.use('Agg')
 
 def get_args():
     parser = argparse.ArgumentParser(description='simulation visualization')
-    parser.add_argument("--sim_types",
-                        nargs="+",
-                        default=['vanilla', 'guesses', 'log', 'linear'])
     parser.add_argument('--sim_dir',
                         default='./simulated_data',
                         help='location of simulated data')
@@ -26,7 +24,7 @@ def get_args():
     return(args)
 
 
-def plot_RTs_per_SSD(sim_data, filename=''):
+def plot_RTs_per_SSD(sim_data, args, filename=''):
 
     SSDs = sim_data.SSD.unique()
     SSDs = [i for i in SSDs if i == i]
@@ -74,7 +72,9 @@ def plot_RTs_per_SSD(sim_data, filename=''):
 if __name__ == '__main__':
 
     args = get_args()
+        
+    for sim_file in glob(path.join(args.sim_dir, '*')):
+        sim_key = sim_file.split('/')[-1].replace('.csv', '')
+        sim_df = pd.read_csv(sim_file)
+        plot_RTs_per_SSD(sim_df, args, filename=sim_key)
 
-    for sim in args.sim_types:
-        sim_df = pd.read_csv('%s/%s.csv' % (args.sim_dir, sim))
-        plot_RTs_per_SSD(sim_df, filename=sim)

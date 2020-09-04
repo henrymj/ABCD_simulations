@@ -8,26 +8,18 @@ class SimulateData():
                  variable_mu_stop=False,
                  trigger_failures=False,
                  guesses=False,
-                 graded_mu_go=None):
+                 graded_mu_go=False):
         self.model = model
         self.variable_mu_stop = variable_mu_stop
         self.trigger_failures = trigger_failures
         self.guesses = guesses
+        self.graded_mu_go = graded_mu_go
         trial_iterators = {
             'independent_race': self._independent_race_trial,
             'interactive_race': self._interactive_race_trial,
             'blocked_input': self._blocked_input_trial
         }
         self._trial_iter = trial_iterators[model]
-        
-        self._mu_go_grader = None
-        if graded_mu_go:
-            mu_go_graders = {
-                'log': self._log_mu_go,
-                'linear': self._linear_mu_go,
-            }
-            assert graded_mu_go in ['log', 'linear']
-            self._mu_go_grader = mu_go_graders[graded_mu_go]
 
     def simulate(self, params={}):
         params = self._init_params(params)
@@ -249,17 +241,17 @@ class SimulateData():
 
     def _init_params(self, params):
         # TODO: move default dict to json, read in
-        default_dict = {'mu_go': .2,
+        default_dict = {'mu_go': .25,
                         'mu_stop': .6,
-                        'noise_go': 1.13,
-                        'noise_stop': 1.75,
-                        'threshold': 100,
+                        'noise_go': 1.15,
+                        'noise_stop': 1.45,
+                        'threshold': 95,
                         'nondecision_go': 50,
                         'nondecision_stop': 50,
                         'inhibition_interaction': .5,
                         'SSDs': np.arange(0, 600, 50),
                         'n_trials': 1000,
-                        'max_time': 3000,
+                        'max_time': 1000,
                         'p_trigger_fail': 0,
                         'p_guess': 0,
                         'guess_function': lambda x: np.random.uniform(
@@ -271,7 +263,12 @@ class SimulateData():
             if key not in params:
                 params[key] = default_dict[key]
 
-        
+        if self.graded_mu_go:
+            mu_go_graders = {
+                'log': self._log_mu_go,
+                'linear': self._linear_mu_go,
+            }
+            self._mu_go_grader = mu_go_graders[params['mu_go_grader']]
 
         return params
 
