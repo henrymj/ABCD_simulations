@@ -8,7 +8,7 @@ class SimulateData():
                  variable_mu_stop=False,
                  trigger_failures=False,
                  guesses=False,
-                 graded_mu_go=None):
+                 mu_go_grader=None):
         self.model = model
         self.variable_mu_stop = variable_mu_stop
         self.trigger_failures = trigger_failures
@@ -21,13 +21,13 @@ class SimulateData():
         self._trial_iter = trial_iterators[model]
         
         self._mu_go_grader = None
-        if graded_mu_go:
+        if mu_go_grader:
             mu_go_graders = {
                 'log': self._log_mu_go,
                 'linear': self._linear_mu_go,
             }
-            assert graded_mu_go in ['log', 'linear']
-            self._mu_go_grader = mu_go_graders[graded_mu_go]
+            assert mu_go_grader in ['log', 'linear']
+            self._mu_go_grader = mu_go_graders[mu_go_grader]
 
     def simulate(self, params={}):
         params = self._init_params(params)
@@ -233,7 +233,7 @@ class SimulateData():
     def _get_mu_go(self, params, SSD):
         # TODO: make more dynamic, pass max_SSD
         mu_go = params['mu_go']
-        if self.graded_mu_go and SSD is not None:
+        if self._mu_go_grader and SSD is not None:
             mu_go = self._mu_go_grader(mu_go, SSD)
         return mu_go
 

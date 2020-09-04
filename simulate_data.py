@@ -79,8 +79,8 @@ if __name__ == '__main__':
     simulator_dict = {
         'vanilla': SimulateData(),
         'guesses': SimulateData(guesses=True),
-        'graded_mu_go_log': SimulateData(graded_mu_go='log'),
-        'graded_mu_go_linear': SimulateData(graded_mu_go='linear')
+        'graded_mu_go_log': SimulateData(mu_go_grader='log'),
+        'graded_mu_go_linear': SimulateData(mu_go_grader='linear')
     }
 
     group_data_dict = {
