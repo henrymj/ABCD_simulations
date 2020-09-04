@@ -12,7 +12,9 @@ def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
     parser.add_argument('--n_subjects', default=250)
     parser.add_argument('--n_trials', default=650)
-    parser.add_argument('--out_dir', default='./Simulated_Data',
+    parser.add_argument('--abcd_dir', default='./abcd_data',
+                        help='location of ABCD data')
+    parser.add_argument('--out_dir', default='./simulated_data',
                         help='location to save simulated data')
     args = parser.parse_args()
     return(args)
@@ -37,7 +39,7 @@ if __name__ == '__main__':
     args = get_args()
 
     # GET ABCD INFO
-    abcd_data = pd.read_csv('minimal_abcd_no_issue_3.csv')
+    abcd_data = pd.read_csv('%s/minimal_abcd_no_issue_3.csv' % args.abcd_dir)
 
     SSDs = abcd_data.SSDDur.unique()
     SSDs = [i for i in SSDs if i == i and i <= 550]

@@ -8,12 +8,12 @@ def get_args():
     parser = argparse.ArgumentParser(description='simulation visualization')
     parser.add_argument("--sim_types",
                         nargs="+",
-                        default=['vanilla', 'guesses', 'graded_mu_go'])
+                        default=['vanilla', 'guesses', 'log', 'linear'])
     parser.add_argument('--sim_dir',
-                        default='./Simulated_Data',
+                        default='./simulated_data',
                         help='location of simulated data')
     parser.add_argument('--out_dir',
-                        default='./SSRT_metrics',
+                        default='./ssrt_metrics',
                         help='location to save SSRT metrics')
     parser.add_argument('--ssrt_model',
                         default='all')
@@ -28,4 +28,4 @@ if __name__ == '__main__':
     for sim in args.sim_types:
         sim_df = pd.read_csv('%s/%s.csv' % (args.sim_dir, sim))
         metrics_df = ssrtmodel.fit_transform(sim_df, level='group')
-        metrics_df.to_csv('%s/%s.csv' % args.out_dir, sim)
+        metrics_df.to_csv('%s/%s.csv' % (args.out_dir, sim))

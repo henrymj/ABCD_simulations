@@ -17,8 +17,11 @@ def get_args():
                         nargs="+",
                         default=['vanilla', 'guesses', 'log', 'linear'])
     parser.add_argument('--sim_dir',
-                        default='./Simulated_Data',
+                        default='./simulated_data',
                         help='location of simulated data')
+    parser.add_argument('--out_dir',
+                        default='./visualizations',
+                        help='location to save SSRT metrics')
     args = parser.parse_args()
     return(args)
 
@@ -64,7 +67,7 @@ def plot_RTs_per_SSD(sim_data, filename=''):
                         colormap=cm.autumn_r,
                         fade=True)
 
-    plt.savefig('%s.png' % filename)
+    plt.savefig('%s/%s.png' % (args.out_dir, filename))
     plt.close()
 
 

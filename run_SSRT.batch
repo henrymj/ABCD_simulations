@@ -2,7 +2,7 @@
 #SBATCH --job-name=ABCD_SSRT
 #SBATCH --output=.out/ABCD_SSRT_%j.out
 #SBATCH --error=.err/ABCD_SSRT_%j.err
-#SBATCH --time=12:00:00
+#SBATCH --time=5:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=poldracklab@stanford.edu
 #SBATCH --cpus-per-task=16

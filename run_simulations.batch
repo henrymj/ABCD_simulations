@@ -2,7 +2,7 @@
 #SBATCH --job-name=ABCD_sim
 #SBATCH --output=.out/ABCD_sim_%j.out
 #SBATCH --error=.err/ABCD_sim_%j.err
-#SBATCH --time=12:00:00
+#SBATCH --time=8:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=poldracklab@stanford.edu
 #SBATCH --cpus-per-task=16
@@ -11,8 +11,6 @@
 #SBATCH --exclude=sh02-06n01,sh02-06n02
 export PYTHONPATH=""
 
-ml labs
-ml poldrack
-ml anaconda/5.0.0-py36
+conda activate py3-env
 
 python simulate_data.py
