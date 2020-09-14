@@ -41,7 +41,7 @@ if __name__ == '__main__':
     abcd_data = pd.read_csv('%s/minimal_abcd_no_issue_3.csv' % args.abcd_dir)
 
     SSDs = abcd_data.SSDDur.unique()
-    SSDs = [i for i in SSDs if i == i and i <= 550]
+    SSDs = [i for i in SSDs if i == i]
     SSDs.sort()
     acc_per_SSD = pd.DataFrame()
     for ssd in SSDs:
