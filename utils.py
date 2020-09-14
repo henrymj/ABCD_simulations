@@ -178,7 +178,7 @@ class SimulateData():
     def _set_n_trials(self, params):
         num_SSDs = len(params['SSDs'])
         n_trials_stop = params['n_trials_stop']
-        if type(params['n_trials_stop']) == float:
+        if type(params['n_trials_stop']) in [float, int]:
             n_trials_stop = [params['n_trials_stop']] * num_SSDs
         elif type(params['n_trials_stop']) in [list, np.ndarray]:
             if len(params['n_trials_stop']) == 1:
