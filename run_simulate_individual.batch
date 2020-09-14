@@ -13,4 +13,4 @@ export PYTHONPATH=""
 
 conda activate py3-env
 
-python simulate_data.py
+python simulate_individual.py

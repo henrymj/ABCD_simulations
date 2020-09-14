@@ -10,8 +10,7 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_subjects', default=250)
-    parser.add_argument('--n_trials', default=650)
+    parser.add_argument('--n_trials', default=150000)
     parser.add_argument('--abcd_dir', default='./abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--out_dir', default='./simulated_data',
@@ -73,9 +72,6 @@ if __name__ == '__main__':
         ).stop_rt_adjusted.values
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
-    # SIMULATE
-    subjects = np.arange(0, args.n_subjects)
-
     simulator_dict = {
         'vanilla': SimulateData(),
         'guesses': SimulateData(guesses=True),
@@ -90,23 +86,15 @@ if __name__ == '__main__':
         'graded_mu_go_linear': pd.DataFrame(),
     }
 
-    for subject in subjects:
-        params = {
-            'n_trials': args.n_trials,
-            'SSDs': SSDs,
-            'mu_go': np.random.normal(.2, scale=.05),
-            'mu_stop': np.random.normal(.6, scale=.05),
-            'guess_function': sample_exgauss,
-            'p_guess': p_guess_per_SSD,
-        }
-        for sim_key in simulator_dict:
-            data = simulator_dict[sim_key].simulate(params)
-            data['ID'] = subject
-            group_data_dict[sim_key] = pd.concat(
-                [group_data_dict[sim_key], data],
-                0)
+    params = {
+        'n_trials_stop': args.n_trials,
+        'n_trials_go': args.n_trials,
+        'SSDs': SSDs,
+        'guess_function': sample_exgauss,
+        'p_guess': p_guess_per_SSD,
+    }
 
-    for sim_key in group_data_dict:
-        curr_group = group_data_dict[sim_key].copy()
-        curr_group['simulation'] = sim_key
-        curr_group.to_csv('%s/%s.csv' % (args.out_dir, sim_key))
+    for sim_key in simulator_dict:
+        data = simulator_dict[sim_key].simulate(params)
+        data['simulation'] = sim_key
+        data.to_csv('%s/individual_%s.csv' % (args.out_dir, sim_key))

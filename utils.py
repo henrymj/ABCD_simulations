@@ -19,7 +19,7 @@ class SimulateData():
             'blocked_input': self._blocked_input_trial
         }
         self._trial_iter = trial_iterators[model]
-        
+
         self._mu_go_grader = None
         if mu_go_grader:
             mu_go_graders = {
@@ -32,66 +32,68 @@ class SimulateData():
     def simulate(self, params={}):
         params = self._init_params(params)
         data_dict = self._init_data_dict()
-        self._set_n_guesses_per_type(params)
+        self._set_n_trials(params)
+        self._set_n_guesses(params)
         for ssd_idx, SSD in enumerate(params['SSDs']):
-            data_dict = self._simulate_guesses(data_dict, params, SSD, ssd_idx)
+            data_dict = self._simulate_guesses(data_dict, params, SSD)
             data_dict = self._simulate_stop_trials(data_dict, params,
-                                                   SSD, ssd_idx)
+                                                   SSD)
         data_dict = self._simulate_go_trials(data_dict, params)
 
+        # convert to dataframe
         data_df = pd.DataFrame.from_dict(data_dict)
         data_df['block'] = 0
-        data_df['goRT'] = np.where(data_df['condition'] == 'go',
-                                   data_df['RT'],
-                                   np.nan)
-        data_df['stopRT'] = np.where(data_df['condition'] == 'stop',
-                                     data_df['RT'],
-                                     np.nan)
+        for rt_type in ['go', 'stop']:
+            data_df['{}RT'.format(rt_type)] = np.where(
+                data_df['condition'] == rt_type,
+                data_df['RT'],
+                np.nan)
         del data_df['RT']
+
         return data_df
 
-    def _simulate_guesses(self, data_dict, params, SSD, ssd_idx):
+    def _simulate_guesses(self, data_dict, params, SSD):
+        if SSD:
+            n_guess = int(self._n_guess_stop[SSD])
+        else:
+            n_guess = int(self._n_guess_go)
         guess_RTs = params['guess_function'](
-            int(self._n_guesses[ssd_idx])
+            n_guess
         )
         for trial_idx, guess_RT in enumerate(guess_RTs):
             trial = self._init_trial_dict(params, trial_idx,
                                           SSD=SSD)
             trial['RT'] = guess_RT
             data_dict = self._update_data_dict(data_dict, trial)
-        # if SSD is None:
-        #     for trial_idx, guess_RT in enumerate(guess_RTs):
-        #         trial = self._init_trial_dict(params, trial_idx)
-        #         trial['RT'] = guess_RT
-        #         data_dict = self._update_data_dict(data_dict, trial)
-        # else:
-        #     stop_init_time = SSD + params['nondecision_stop']
-        #     for trial_idx, guess_RT in enumerate(guess_RTs):
-        #         trial = self._init_trial_dict(params, trial_idx,
-        #                                       SSD=SSD,
-        #                                       stop_init_time=stop_init_time)
-        #         stop_accum = 0
-        #         for time in range(1, trial['max_time']+1):
-        #             if time >= trial['stop_init_time']:
-        #                 stop_accum = self._at_least_0(
-        #                     stop_accum + trial['mu_stop'] +
-        #                     np.random.normal(loc=0, scale=trial['noise_stop'])
-        #                 )
-        #                 trial['process_stop'].append(stop_accum)
-        #             if stop_accum > trial['threshold']:
-        #                 break
-
-        #         if guess_RT <= time:
-        #             trial['RT'] = guess_RT
-
-        #         trial['accum_stop'] = stop_accum
-        #         data_dict = self._update_data_dict(data_dict, trial)
         return data_dict
 
-    def _simulate_stop_trials(self, data_dict, params, SSD, ssd_idx):
+    def _simulate_go_trials(self, data_dict, params):
+        data_dict = self._simulate_guesses(data_dict, params, None)
+        for trial_idx in range(int(self._n_guess_go),
+                               self._n_trials_go):
+            trial = self._init_trial_dict(params, trial_idx, condition='go')
+            go_accum = 0
+            stop_accum = 0
+            for time in range(1, trial['max_time']+1):
+                if time >= trial['nondecision_go']:
+                    go_accum = self._at_least_0(
+                        go_accum + trial['mu_go'] +
+                        np.random.normal(loc=0, scale=trial['noise_go'])
+                    )
+                    trial['process_go'].append(go_accum)
+                if go_accum > trial['threshold']:
+                    trial['RT'] = time
+                    break
+
+            trial['accum_go'] = go_accum
+            trial['accum_stop'] = stop_accum
+            data_dict = self._update_data_dict(data_dict, trial)
+        return data_dict
+
+    def _simulate_stop_trials(self, data_dict, params, SSD):
         stop_init_time = SSD + params['nondecision_stop']
-        for trial_idx in range(int(self._n_guesses[ssd_idx]),
-                               params['n_trials']):
+        for trial_idx in range(int(self._n_guess_stop[SSD]),
+                               int(self._n_trials_stop[SSD])):
             trial = self._init_trial_dict(params, trial_idx,
                                           SSD=SSD,
                                           stop_init_time=stop_init_time)
@@ -173,52 +175,51 @@ class SimulateData():
         trial['accum_stop'] = stop_accum
         return self._update_data_dict(data_dict, trial)
 
-    def _simulate_go_trials(self, data_dict, params):
-        data_dict = self._simulate_guesses(data_dict, params, None, -1)
-        for trial_idx in range(int(self._n_guesses[-1]),
-                               params['n_trials']):
-            trial = self._init_trial_dict(params, trial_idx, condition='go')
-            go_accum = 0
-            stop_accum = 0
-            for time in range(1, trial['max_time']+1):
-                if time >= trial['nondecision_go']:
-                    go_accum = self._at_least_0(
-                        go_accum + trial['mu_go'] +
-                        np.random.normal(loc=0, scale=trial['noise_go'])
-                    )
-                    trial['process_go'].append(go_accum)
-                if go_accum > trial['threshold']:
-                    trial['RT'] = time
-                    break
+    def _set_n_trials(self, params):
+        num_SSDs = len(params['SSDs'])
+        n_trials_stop = params['n_trials_stop']
+        if type(params['n_trials_stop']) == float:
+            n_trials_stop = [params['n_trials_stop']] * num_SSDs
+        elif type(params['n_trials_stop']) in [list, np.ndarray]:
+            if len(params['n_trials_stop']) == 1:
+                n_trials_stop = params['n_trials_stop'] * num_SSDs
+            else:
+                n_trials_stop = params['n_trials_stop']
 
-            trial['accum_go'] = go_accum
-            trial['accum_stop'] = stop_accum
-            data_dict = self._update_data_dict(data_dict, trial)
-        return data_dict
+        assert(len(n_trials_stop) == num_SSDs)
 
-    def _set_n_guesses_per_type(self, params):
+        self._n_trials_go = params['n_trials_go']
+        self._n_trials_stop = {SSD: n for SSD, n in
+                               zip(params['SSDs'], n_trials_stop)}
+
+    def _set_n_guesses(self, params):
         # TODO: ADD ASSERTIONS TO CHECK FOR CORRECT USES, clean up!!!
         # TODO: allow for guessing on go trials
-        num_types = len(params['SSDs']) + 1
+        num_SSDs = len(params['SSDs'])
         if self.guesses:
-            if type(params['p_guess']) == float:
-                p_guess_per_type = [params['p_guess']] * num_types
-            elif type(params['p_guess']) in [list, np.ndarray]:
-                if len(params['p_guess']) == 1:
-                    p_guess_per_type = params['p_guess'] * num_types
+            p_guess_go = params['p_guess_go']
+            if type(params['p_guess_stop']) in [float, int]:
+                p_guess_per_SSD = [params['p_guess_stop']] * num_SSDs
+            elif type(params['p_guess_stop']) in [list, np.ndarray]:
+                if len(params['p_guess_stop']) == 1:
+                    p_guess_per_SSD = params['p_guess_stop'] * num_SSDs
                 else:
-                    p_guess_per_type = params['p_guess']
+                    p_guess_per_SSD = params['p_guess_stop']
+            else:
+                print('did not expect type {}'.format(type(params['p_guess_stop'])))
         else:
-            p_guess_per_type = [0] * num_types
+            p_guess_per_SSD = [0] * num_SSDs
+            p_guess_go = 0
 
-        if len(p_guess_per_type) == len(params['SSDs']):
-            p_guess_per_type.append(0.0)
-        assert(len(p_guess_per_type) == num_types)
-        # TODO: clean up this line -
+        assert(len(p_guess_per_SSD) == num_SSDs)
+
+        # TODO: clean up this lines -
         # if 0 is returned, it's viewed as an int,
         # not a float, so it needs to be converted
-        self._n_guesses = np.rint([float(p * params['n_trials'])
-                                   for p in p_guess_per_type])
+        self._n_guess_go = np.rint(float(p_guess_go * self._n_trials_go))
+        self._n_guess_stop = {SSD: np.rint(float(p * self._n_trials_stop[SSD]))
+                              for SSD, p in zip(params['SSDs'],
+                                                p_guess_per_SSD)}
 
     def _get_mu_stop(self, params):
         mu_stop = params['mu_stop']
@@ -258,10 +259,12 @@ class SimulateData():
                         'nondecision_stop': 50,
                         'inhibition_interaction': .5,
                         'SSDs': np.arange(0, 600, 50),
-                        'n_trials': 1000,
+                        'n_trials_go': 1000,
+                        'n_trials_stop': 1000,
                         'max_time': 3000,
                         'p_trigger_fail': 0,
-                        'p_guess': 0,
+                        'p_guess_go': 0,
+                        'p_guess_stop': 0,
                         'guess_function': lambda x: np.random.uniform(
                             200, 400, x),
                         'mu_go_grader': 'log'
@@ -269,9 +272,7 @@ class SimulateData():
 
         for key in default_dict:
             if key not in params:
-                params[key] = default_dict[key]
-
-        
+                params[key] = default_dict[key]        
 
         return params
 
