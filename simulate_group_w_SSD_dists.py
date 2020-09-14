@@ -74,10 +74,7 @@ if __name__ == '__main__':
         ).stop_rt_adjusted.values
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
-    SSD_dist_per_sub = pd.read_csv('abcd_data/SSD_dist_by_subj.csv')
-
-    # SIMULATE
-    subjects = np.arange(0, args.n_subjects)
+    SSD_dist_per_sub = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir)
 
     simulator_dict = {
         'vanilla': SimulateData(),
