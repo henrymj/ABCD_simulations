@@ -52,15 +52,14 @@ def add_guess_RTs_and_sort(goRTs, SSD):
     curr_n = len(goRTs)
     p_guess = SSD_guess_dict[SSD]
     if p_guess == 1.0:
-        total_n = 10000
-    else:
-        total_n = int(np.floor(curr_n * (1/(1-p_guess))))
-
-    guess_RTs = sample_exgauss(total_n-curr_n)
-    if p_guess == 1.0:
+        guess_RTs = sample_exgauss(curr_n)
         guess_RTs.sort()
         return guess_RTs
     else:
+        # p_guess = n_guess / (n_guess + curr_n) =>
+        # n_guess = (p_guess * curr_n) / (1 - p_guess)
+        n_guess = int(np.round((p_guess*curr_n)/(1-p_guess)))
+        guess_RTs = sample_exgauss(n_guess)
         all_RTs = np.concatenate([goRTs, guess_RTs])
         all_RTs.sort()
         return all_RTs
