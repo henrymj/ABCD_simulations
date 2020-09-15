@@ -58,7 +58,7 @@ def add_guess_RTs_and_sort(goRTs, SSD):
     else:
         # p_guess = n_guess / (n_guess + curr_n) =>
         # n_guess = (p_guess * curr_n) / (1 - p_guess)
-        n_guess = int(np.round((p_guess*curr_n)/(1-p_guess)))
+        n_guess = int(np.rint(float((p_guess*curr_n)/(1-p_guess))))
         guess_RTs = sample_exgauss(n_guess)
         all_RTs = np.concatenate([goRTs, guess_RTs])
         all_RTs.sort()
