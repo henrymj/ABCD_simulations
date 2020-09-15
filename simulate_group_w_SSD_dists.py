@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import argparse
+from os import path
 from sympy.solvers import solve
 from sympy import Symbol
 import scipy.stats as sstats
@@ -10,7 +11,9 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_trials', default=150000)
+    parser.add_argument('--n_trials', default=1000)
+    parser.add_argument('--method', default='vanilla',
+                        help='choose from vanilla, guesses, log, linear')
     parser.add_argument('--abcd_dir', default='./abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--out_dir', default='./simulated_data',
@@ -76,21 +79,25 @@ if __name__ == '__main__':
 
     SSD_dist_per_sub = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir)
 
+    # SIMULATE
     simulator_dict = {
         'vanilla': SimulateData(),
         'guesses': SimulateData(guesses=True),
-        'graded_mu_go_log': SimulateData(mu_go_grader='log'),
-        'graded_mu_go_linear': SimulateData(mu_go_grader='linear')
+        'log': SimulateData(mu_go_grader='log'),
+        'linear': SimulateData(mu_go_grader='linear')
     }
+    simulator = simulator_dict[args.method]
 
-    group_data_dict = {
-        'vanilla': pd.DataFrame(),
-        'guesses': pd.DataFrame(),
-        'graded_mu_go_log': pd.DataFrame(),
-        'graded_mu_go_linear': pd.DataFrame(),
-    }
+    out_file = '%s/ABCD_SSD_group_%s.csv' % (args.out_dir, args.method)
+    if path.exists(out_file):
+        group_data = pd.read_csv(out_file, index_col=0)
+        remaining_subs = list(set(SSD_dist_per_sub.NARGUID.unique()) -
+                              set(group_data.ID.unique()))
+    else:
+        group_data = pd.DataFrame()
+        remaining_subs = SSD_dist_per_sub.NARGUID.unique()
 
-    for subject in SSD_dist_per_sub.NARGUID.unique():
+    for subject in remaining_subs:
         sub_df = SSD_dist_per_sub.query("NARGUID=='%s'" % subject)
         sub_SSDs = sub_df.SSDDur.values
         params = {
@@ -101,14 +108,7 @@ if __name__ == '__main__':
             'guess_function': sample_exgauss,
             'p_guess': [p_guess_dict[ssd] for ssd in sub_SSDs],
         }
-        for sim_key in simulator_dict:
-            data = simulator_dict[sim_key].simulate(params)
-            data['ID'] = subject
-            group_data_dict[sim_key] = pd.concat(
-                [group_data_dict[sim_key], data],
-                0)
-
-    for sim_key in group_data_dict:
-        curr_group = group_data_dict[sim_key].copy()
-        curr_group['simulation'] = sim_key
-        curr_group.to_csv('%s/ABCD_SSD_group_%s.csv' % (args.out_dir, sim_key))
+        data = simulator.simulate(params)
+        data['ID'] = subject
+        group_data = pd.concat([group_data, data], 0)
+        group_data.to_csv(out_file)

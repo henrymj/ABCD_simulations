@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=sim_SSD
-#SBATCH --output=.out/sim_SSD_%j.out
-#SBATCH --error=.err/sim_SSD_%j.err
+#SBATCH --job-name=sim_SSD_{method}
+#SBATCH --output=.out/sim_SSD_{method}_%j.out
+#SBATCH --error=.err/sim_SSD_{method}_%j.err
 #SBATCH --time=8:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=poldracklab@stanford.edu
@@ -13,4 +13,4 @@ export PYTHONPATH=""
 
 conda activate py3-env
 
-python simulate_group_w_SSD_dists.py
+python simulate_group_w_SSD_dists.py -method {method}
