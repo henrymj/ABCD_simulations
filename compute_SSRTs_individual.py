@@ -21,17 +21,19 @@ def get_args():
     return(args)
 
 
-def generate_out_df(data):
+def generate_out_df(data, SSD_guess_dict):
     info = []
     ssrtmodel = SSRTmodel()
     goRTs = data.loc[data.goRT.notnull(), 'goRT'].values
-    for SSD in data.SSD.unique():
+    SSDs = [i for i in data.SSD.unique() if i == i]
+    SSDs.sort()
+    for SSD in SSDs:
         curr_df = data.query(
             "condition=='go' | condition=='stop' and SSD == %s" % SSD
             ).copy()
         curr_metrics = ssrtmodel.fit_transform(curr_df)
 
-        goRTs_w_guesses = add_guess_RTs_and_sort(goRTs, SSD)
+        goRTs_w_guesses = add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict)
         SSRT_w_guesses = SSRT_wReplacement(curr_metrics, goRTs_w_guesses)
 
         goRTs_graded = simulate_graded_RTs_and_sort(1000, SSD)
@@ -48,7 +50,7 @@ def generate_out_df(data):
         columns=['SSD', 'SSRT_standard', 'SSRT_w_guesses', 'SSRT_w_graded'])
 
 
-def add_guess_RTs_and_sort(goRTs, SSD):
+def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict):
     curr_n = len(goRTs)
     p_guess = SSD_guess_dict[SSD]
     if p_guess == 1.0:
@@ -56,6 +58,7 @@ def add_guess_RTs_and_sort(goRTs, SSD):
         guess_RTs.sort()
         return guess_RTs
     else:
+        # Equation logic:
         # p_guess = n_guess / (n_guess + curr_n) =>
         # n_guess = (p_guess * curr_n) / (1 - p_guess)
         n_guess = int(np.rint(float((p_guess*curr_n)/(1-p_guess))))
@@ -131,25 +134,25 @@ if __name__ == '__main__':
     p = Symbol('p')
     guess_mean = acc_per_SSD.mean()[0.0]
     go_mean = acc_per_SSD.mean()[-1]
-    p_guess_per_SSD = []
+    SSD_guess_dict = {}
     for ssd in acc_per_SSD.columns:
         curr_mean = acc_per_SSD.mean()[ssd]
         solution = solve(p*guess_mean + (1-p)*go_mean - curr_mean, p)
         assert len(solution) == 1
-        p_guess_per_SSD.append(solution[0])
+        SSD_guess_dict[ssd] = solution[0]
+
+
 
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
         ).stop_rt_adjusted.values
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
-    SSD_guess_dict = {ssd: p_guess for ssd, p_guess
-                      in zip(SSDs, p_guess_per_SSD)}
 
     # CALCULATE SSRT
     for data_file in glob(path.join(args.sim_dir, 'individual_*.csv')):
         sim_type = path.basename(
             data_file
             ).replace('individual_', '').replace('.csv', '')
-        out_df = generate_out_df(pd.read_csv(data_file))
+        out_df = generate_out_df(pd.read_csv(data_file), SSD_guess_dict)
         out_df.to_csv(path.join(args.out_dir, 'indiv_%s.csv' % sim_type))
