@@ -11,6 +11,7 @@
 #SBATCH --exclude=sh02-06n01,sh02-06n02
 export PYTHONPATH=""
 
+source ~/miniconda3/etc/profile.d/conda.sh 
 conda activate py3-env
 
-python simulate_group_w_SSD_dists.py -method {method}
+python simulate_group_w_SSD_dists.py --method {method}
