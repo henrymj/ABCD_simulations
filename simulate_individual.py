@@ -67,7 +67,6 @@ if __name__ == '__main__':
         assert len(solution) == 1
         p_guess_per_SSD.append(solution[0])
 
-    print(p_guess_per_SSD)
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
         ).stop_rt_adjusted.values
