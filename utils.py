@@ -60,10 +60,28 @@ class SimulateData():
         guess_RTs = params['guess_function'](
             n_guess
         )
+        stop_init_time = SSD + params['nondecision_stop'] if SSD else np.nan
         for trial_idx, guess_RT in enumerate(guess_RTs):
             trial = self._init_trial_dict(params, trial_idx,
-                                          SSD=SSD)
-            trial['RT'] = guess_RT
+                                          SSD=SSD,
+                                          stop_init_time=stop_init_time)
+            if SSD:
+                stop_accum = 0
+                for time in range(1, trial['max_time']+1):
+                    if time >= trial['stop_init_time']:
+                        stop_accum = self._at_least_0(
+                            stop_accum + trial['mu_stop'] +
+                            np.random.normal(loc=0, scale=trial['noise_stop'])
+                        )
+                        trial['process_stop'].append(stop_accum)
+                    if stop_accum > trial['threshold']:
+                        break
+
+                if guess_RT <= time:
+                    trial['RT'] = guess_RT
+            else:
+                if guess_RT <= trial['max_time']:
+                    trial['RT'] = guess_RT
             data_dict = self._update_data_dict(data_dict, trial)
         return data_dict
 
@@ -250,7 +268,7 @@ class SimulateData():
     def _init_params(self, params):
         # TODO: move default dict to json, read in
         default_dict = {'mu_go': .2,
-                        'mu_stop': .6,
+                        'mu_stop': .4,
                         'noise_go': 1.13,
                         'noise_stop': 1.75,
                         'threshold': 100,

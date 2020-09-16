@@ -5,6 +5,8 @@ from sympy.solvers import solve
 from sympy import Symbol
 import scipy.stats as sstats
 
+from simulate_individual import generate_exgauss_sampler_from_fit
+
 from utils import SimulateData
 
 
@@ -19,20 +21,6 @@ def get_args():
     args = parser.parse_args()
     return(args)
 
-
-def generate_exgauss_sampler_from_fit(data,
-                                      default_sample_size=100000):
-    FIT_K, FIT_LOC, FIT_SCALE = sstats.exponnorm.fit(data)
-    FIT_LAMBDA = 1/(FIT_K*FIT_SCALE)
-    FIT_BETA = 1/FIT_LAMBDA
-
-    def sample_exgauss(sample_size=default_sample_size,
-                       beta=FIT_BETA, scale=FIT_SCALE, loc=FIT_LOC):
-        exp_out = np.random.exponential(scale=beta, size=sample_size)
-        norm_out = np.random.normal(scale=scale, size=sample_size)
-        return (exp_out+norm_out) + loc
-
-    return sample_exgauss
 
 
 if __name__ == '__main__':

@@ -29,7 +29,15 @@ def generate_exgauss_sampler_from_fit(data,
                        beta=FIT_BETA, scale=FIT_SCALE, loc=FIT_LOC):
         exp_out = np.random.exponential(scale=beta, size=sample_size)
         norm_out = np.random.normal(scale=scale, size=sample_size)
-        return (exp_out+norm_out) + loc
+        out = (exp_out+norm_out) + loc
+        n_negatives = np.sum(out < 0)
+        while n_negatives > 0:
+            out[out < 0] = sample_exgauss(n_negatives,
+                                          beta=beta,
+                                          scale=scale,
+                                          loc=loc)
+            n_negatives = np.sum(out < 0)
+        return out
 
     return sample_exgauss
 
@@ -61,7 +69,7 @@ if __name__ == '__main__':
     guess_mean = acc_per_SSD.mean()[0.0]
     go_mean = acc_per_SSD.mean()[-1]
     p_guess_per_SSD = []
-    for ssd in acc_per_SSD.columns:
+    for ssd in SSDs:
         curr_mean = acc_per_SSD.mean()[ssd]
         solution = solve(p*guess_mean + (1-p)*go_mean - curr_mean, p)
         assert len(solution) == 1
