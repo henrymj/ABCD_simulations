@@ -72,9 +72,7 @@ def plot_RTs_per_SSD(sim_data, args, filename=''):
 if __name__ == '__main__':
 
     args = get_args()
-        
     for sim_file in glob(path.join(args.sim_dir, '*')):
         sim_key = sim_file.split('/')[-1].replace('.csv', '')
         sim_df = pd.read_csv(sim_file)
         plot_RTs_per_SSD(sim_df, args, filename=sim_key)
-
