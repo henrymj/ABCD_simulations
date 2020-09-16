@@ -39,15 +39,14 @@ def generate_out_df(data, SSD_guess_dict):
         goRTs_graded = simulate_graded_RTs_and_sort(1000, SSD)
 
         SSRT_w_graded = SSRT_wReplacement(curr_metrics, goRTs_graded)
-        info.append([
-            SSD,
-            curr_metrics['SSRT'],
-            SSRT_w_guesses,
-            SSRT_w_graded
-        ])
+        curr_info = [v for v in curr_metrics.values()] +\
+                    [SSD, SSRT_w_guesses, SSRT_w_graded]
+        info.append(curr_info)
+        cols = [k for k in curr_metrics.keys()] +\
+               ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
     return pd.DataFrame(
         info,
-        columns=['SSD', 'SSRT_standard', 'SSRT_w_guesses', 'SSRT_w_graded'])
+        columns=cols)
 
 
 def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict):
@@ -140,7 +139,6 @@ if __name__ == '__main__':
         solution = solve(p*guess_mean + (1-p)*go_mean - curr_mean, p)
         assert len(solution) == 1
         SSD_guess_dict[ssd] = solution[0]
-
 
 
     SSD0_RTs = abcd_data.query(
