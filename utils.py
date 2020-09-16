@@ -210,7 +210,6 @@ class SimulateData():
         else:
             p_guess_per_SSD = [0] * num_SSDs
             p_guess_go = 0
-
         assert(len(p_guess_per_SSD) == num_SSDs)
 
         # TODO: clean up this lines -
@@ -220,6 +219,7 @@ class SimulateData():
         self._n_guess_stop = {SSD: np.rint(float(p * self._n_trials_stop[SSD]))
                               for SSD, p in zip(params['SSDs'],
                                                 p_guess_per_SSD)}
+        print(self._n_guess_stop)
 
     def _get_mu_stop(self, params):
         mu_stop = params['mu_stop']

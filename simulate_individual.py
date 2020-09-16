@@ -67,6 +67,7 @@ if __name__ == '__main__':
         assert len(solution) == 1
         p_guess_per_SSD.append(solution[0])
 
+    print(p_guess_per_SSD)
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
         ).stop_rt_adjusted.values
@@ -91,7 +92,7 @@ if __name__ == '__main__':
         'n_trials_go': args.n_trials,
         'SSDs': SSDs,
         'guess_function': sample_exgauss,
-        'p_guess': p_guess_per_SSD,
+        'p_guess_stop': p_guess_per_SSD,
     }
 
     for sim_key in simulator_dict:
