@@ -23,7 +23,7 @@ def get_args():
 
 def generate_out_df(data, SSD_guess_dict):
     info = []
-    ssrtmodel = SSRTmodel()
+    ssrtmodel = SSRTmodel(model='replacement')
     goRTs = data.loc[data.goRT.notnull(), 'goRT'].values
     SSDs = [i for i in data.SSD.unique() if i == i]
     SSDs.sort()
