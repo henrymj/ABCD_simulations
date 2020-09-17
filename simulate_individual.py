@@ -44,7 +44,7 @@ def generate_exgauss_sampler_from_fit(data,
 
 if __name__ == '__main__':
     args = get_args()
-
+    print('analyzing ABCD info')
     # GET ABCD INFO
     abcd_data = pd.read_csv('%s/minimal_abcd_no_issue_3.csv' % args.abcd_dir)
 
@@ -74,6 +74,7 @@ if __name__ == '__main__':
         solution = solve(p*guess_mean + (1-p)*go_mean - curr_mean, p)
         assert len(solution) == 1
         p_guess_per_SSD.append(solution[0])
+    print(p_guess_per_SSD)
 
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
@@ -103,6 +104,8 @@ if __name__ == '__main__':
     }
 
     for sim_key in simulator_dict:
+        print(sim_key)
         data = simulator_dict[sim_key].simulate(params)
         data['simulation'] = sim_key
+        print('saving...')
         data.to_csv('%s/individual_%s.csv' % (args.out_dir, sim_key))
