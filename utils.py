@@ -57,6 +57,8 @@ class SimulateData():
             n_guess = int(self._n_guess_stop[SSD])
         else:
             n_guess = int(self._n_guess_go)
+        if n_guess == 0:
+            return data_dict
         guess_RTs = params['guess_function'](
             n_guess
         )
