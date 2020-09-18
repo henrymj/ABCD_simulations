@@ -9,6 +9,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH -p russpold,hns
 #SBATCH --exclude=sh02-06n01,sh02-06n02
+#SBATCH --mem=120GB
+
 export PYTHONPATH=""
 
 source ~/miniconda3/etc/profile.d/conda.sh 
