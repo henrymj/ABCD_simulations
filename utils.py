@@ -53,21 +53,22 @@ class SimulateData():
         return data_df
 
     def _simulate_guesses(self, data_dict, params, SSD):
-        if SSD:
-            n_guess = int(self._n_guess_stop[SSD])
-        else:
+        if SSD is None:  # go trials
             n_guess = int(self._n_guess_go)
+        else:
+            n_guess = int(self._n_guess_stop[SSD])
         if n_guess == 0:
             return data_dict
         guess_RTs = params['guess_function'](
             n_guess
         )
-        stop_init_time = SSD + params['nondecision_stop'] if SSD else np.nan
+        stop_init_time = SSD + params['nondecision_stop'] if\
+            (SSD is not None) else np.nan
         for trial_idx, guess_RT in enumerate(guess_RTs):
             trial = self._init_trial_dict(params, trial_idx,
                                           SSD=SSD,
                                           stop_init_time=stop_init_time)
-            if SSD:
+            if SSD is not None:
                 stop_accum = 0
                 for time in range(1, trial['max_time']+1):
                     if time >= trial['stop_init_time']:
@@ -226,7 +227,8 @@ class SimulateData():
                 else:
                     p_guess_per_SSD = params['p_guess_stop']
             else:
-                print('did not expect type {}'.format(type(params['p_guess_stop'])))
+                print('did not expect type {}'.format(
+                      type(params['p_guess_stop'])))
         else:
             p_guess_per_SSD = [0] * num_SSDs
             p_guess_go = 0
