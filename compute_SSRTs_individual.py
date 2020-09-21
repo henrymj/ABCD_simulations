@@ -36,9 +36,9 @@ def generate_out_df(data, SSD_guess_dict):
         goRTs_w_guesses = add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict)
         SSRT_w_guesses = SSRT_wReplacement(curr_metrics, goRTs_w_guesses)
 
-        goRTs_graded = simulate_graded_RTs_and_sort(1000, SSD)
-
+        goRTs_graded = simulate_graded_RTs_and_sort(len(goRTs), SSD)
         SSRT_w_graded = SSRT_wReplacement(curr_metrics, goRTs_graded)
+        
         curr_info = [v for v in curr_metrics.values()] +\
                     [SSD, SSRT_w_guesses, SSRT_w_graded]
         info.append(curr_info)

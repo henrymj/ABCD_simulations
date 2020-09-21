@@ -234,7 +234,7 @@ class SimulateData():
             p_guess_go = 0
         assert(len(p_guess_per_SSD) == num_SSDs)
 
-        # TODO: clean up this lines -
+        # TODO: clean up these lines? -
         # if 0 is returned, it's viewed as an int,
         # not a float, so it needs to be converted
         self._n_guess_go = np.rint(float(p_guess_go * self._n_trials_go))
