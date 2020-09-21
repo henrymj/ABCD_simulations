@@ -17,16 +17,18 @@ def get_args():
                         help='location of simulated data')
     parser.add_argument('--out_dir', default='./ssrt_metrics',
                         help='location to save ssrt metrics')
+    parser.add_argument('--n_graded_go_trials', default=100000)
     args = parser.parse_args()
     return(args)
 
 
-def generate_out_df(data, SSD_guess_dict):
+def generate_out_df(data, SSD_guess_dict, graded_go_dict):
     info = []
     ssrtmodel = SSRTmodel(model='replacement')
     goRTs = data.loc[data.goRT.notnull(), 'goRT'].values
     SSDs = [i for i in data.SSD.unique() if i == i]
     SSDs.sort()
+
     for SSD in SSDs:
         curr_df = data.query(
             "condition=='go' | condition=='stop' and SSD == %s" % SSD
@@ -36,9 +38,8 @@ def generate_out_df(data, SSD_guess_dict):
         goRTs_w_guesses = add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict)
         SSRT_w_guesses = SSRT_wReplacement(curr_metrics, goRTs_w_guesses)
 
-        goRTs_graded = simulate_graded_RTs_and_sort(len(goRTs), SSD)
-        SSRT_w_graded = SSRT_wReplacement(curr_metrics, goRTs_graded)
-        
+        SSRT_w_graded = SSRT_wReplacement(curr_metrics, graded_go_dict[SSD])
+
         curr_info = [v for v in curr_metrics.values()] +\
                     [SSD, SSRT_w_guesses, SSRT_w_graded]
         info.append(curr_info)
@@ -140,17 +141,23 @@ if __name__ == '__main__':
         assert len(solution) == 1
         SSD_guess_dict[ssd] = solution[0]
 
-
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
         ).stop_rt_adjusted.values
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
+    graded_go_dict = {}
+    for SSD in SSDs:
+        graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
+            args.n_graded_go_trials,
+            SSD)
 
     # CALCULATE SSRT
     for data_file in glob(path.join(args.sim_dir, 'individual_*.csv')):
         sim_type = path.basename(
             data_file
             ).replace('individual_', '').replace('.csv', '')
-        out_df = generate_out_df(pd.read_csv(data_file), SSD_guess_dict)
+        out_df = generate_out_df(pd.read_csv(data_file),
+                                 SSD_guess_dict,
+                                 graded_go_dict)
         out_df.to_csv(path.join(args.out_dir, 'indiv_%s.csv' % sim_type))
