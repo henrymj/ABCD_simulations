@@ -17,7 +17,7 @@ def get_args():
                         help='location of simulated data')
     parser.add_argument('--out_dir', default='./ssrt_metrics',
                         help='location to save ssrt metrics')
-    parser.add_argument('--n_graded_go_trials', default=100000)
+    parser.add_argument('--n_graded_go_trials', default=125000)
     args = parser.parse_args()
     return(args)
 
@@ -34,14 +34,20 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
             "condition=='go' | condition=='stop' and SSD == %s" % SSD
             ).copy()
         curr_metrics = ssrtmodel.fit_transform(curr_df)
+        if (curr_metrics['p_respond'] == 0) | (curr_metrics['p_respond'] == 1):
+            curr_info = [v for v in curr_metrics.values()] +\
+                    [SSD, np.nan, np.nan]
+        else:
+            goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
+                                                     SSD,
+                                                     SSD_guess_dict)
+            SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
+                                               goRTs_w_guesses)
+            SSRT_w_graded = SSRT_wReplacement(curr_metrics,
+                                              graded_go_dict[SSD])
 
-        goRTs_w_guesses = add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict)
-        SSRT_w_guesses = SSRT_wReplacement(curr_metrics, goRTs_w_guesses)
-
-        SSRT_w_graded = SSRT_wReplacement(curr_metrics, graded_go_dict[SSD])
-
-        curr_info = [v for v in curr_metrics.values()] +\
-                    [SSD, SSRT_w_guesses, SSRT_w_graded]
+            curr_info = [v for v in curr_metrics.values()] +\
+                        [SSD, SSRT_w_guesses, SSRT_w_graded]
         info.append(curr_info)
         cols = [k for k in curr_metrics.keys()] +\
                ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
