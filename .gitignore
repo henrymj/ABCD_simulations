@@ -1,5 +1,7 @@
-*data/*.csv
+abcd_data/*.csv
+simulated_data/*.csv
 .out
 .err
 .ipynb_checkpoints
 __pycache__
+.DS_Store

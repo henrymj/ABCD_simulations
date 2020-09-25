@@ -48,7 +48,7 @@ if __name__ == '__main__':
     args = get_args()
     print('analyzing ABCD info')
     # GET ABCD INFO
-    abcd_data = pd.read_csv('%s/minimal_abcd_no_issue_3.csv' % args.abcd_dir)
+    abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
     p_guess_df = pd.read_csv('%s/p_guess_per_ssd.csv' % args.abcd_dir)
 
     SSD0_RTs = abcd_data.query(
