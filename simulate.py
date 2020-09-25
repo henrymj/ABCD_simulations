@@ -57,14 +57,14 @@ if __name__ == '__main__':
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
     simulator_dict = {
-        'vanilla': SimulateData(),
+        'standard': SimulateData(),
         'guesses': SimulateData(guesses=True),
         'graded_mu_go_log': SimulateData(mu_go_grader='log'),
         'graded_mu_go_linear': SimulateData(mu_go_grader='linear')
     }
 
     group_data_dict = {
-        'vanilla': pd.DataFrame(),
+        'standard': pd.DataFrame(),
         'guesses': pd.DataFrame(),
         'graded_mu_go_log': pd.DataFrame(),
         'graded_mu_go_linear': pd.DataFrame(),
