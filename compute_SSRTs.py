@@ -167,7 +167,7 @@ if __name__ == '__main__':
         graded_go_dict[SSD] = [0]
 
     # CALCULATE SSRT
-    for data_file in glob(path.join(args.sim_dir, 'individual_graded_mu_go_log.csv')):
+    for data_file in glob(path.join(args.sim_dir, '*.csv')):
         sim_type = path.basename(
             data_file
             ).replace('individual_', '').replace('.csv', '')

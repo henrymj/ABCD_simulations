@@ -83,4 +83,4 @@ if __name__ == '__main__':
         data = simulator_dict[sim_key].simulate(params)
         data['simulation'] = sim_key
         print('saving...')
-        data.to_csv('%s/individual_%s.csv' % (args.out_dir, sim_key))
+        data.to_csv('%s/%s.csv' % (args.out_dir, sim_key))
