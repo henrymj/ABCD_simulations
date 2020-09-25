@@ -161,12 +161,13 @@ if __name__ == '__main__':
 
     graded_go_dict = {}
     for SSD in SSDs:
-        graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
-            args.n_graded_go_trials,
-            SSD)
+        # graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
+        #     args.n_graded_go_trials,
+        #     SSD)
+        graded_go_dict[SSD] = [0]
 
     # CALCULATE SSRT
-    for data_file in glob(path.join(args.sim_dir, 'individual_*.csv')):
+    for data_file in glob(path.join(args.sim_dir, 'individual_graded_mu_go_log.csv')):
         sim_type = path.basename(
             data_file
             ).replace('individual_', '').replace('.csv', '')
