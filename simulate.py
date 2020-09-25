@@ -73,9 +73,9 @@ if __name__ == '__main__':
     params = {
         'n_trials_stop': args.n_trials,
         'n_trials_go': args.n_trials,
-        'SSDs': p_guess_df.columns,
+        'SSDs': list(p_guess_df.columns.astype(float)),
         'guess_function': sample_exgauss,
-        'p_guess_stop': p_guess_df.values,
+        'p_guess_stop': list(p_guess_df.values.astype(float)[0]),
     }
 
     for sim_key in simulator_dict:
