@@ -125,7 +125,7 @@ if __name__ == '__main__':
     args = get_args()
 
     # GET ABCD INFO
-    abcd_data = pd.read_csv('abcd_data/minimal_abcd_no_issue_3.csv')
+    abcd_data = pd.read_csv('abcd_data/minimal_abcd_clean.csv')
 
     SSDs = abcd_data.SSDDur.unique()
     SSDs = [i for i in SSDs if i == i]
