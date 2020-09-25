@@ -108,8 +108,8 @@ if __name__ == '__main__':
     for sim_key in ['graded_mu_go_log']:
         print(sim_key)
         if sim_key == 'graded_mu_go_log':
-            params['noise_go'] = 4
-            params['noise_stop'] = 4
+            params['noise_go'] = 10
+            params['noise_stop'] = 10
         data = simulator_dict[sim_key].simulate(params)
         data['simulation'] = sim_key
         print('saving...')
