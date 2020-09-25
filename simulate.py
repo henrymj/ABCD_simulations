@@ -49,34 +49,7 @@ if __name__ == '__main__':
     print('analyzing ABCD info')
     # GET ABCD INFO
     abcd_data = pd.read_csv('%s/minimal_abcd_no_issue_3.csv' % args.abcd_dir)
-
-    SSDs = abcd_data.SSDDur.unique()
-    SSDs = [i for i in SSDs if i == i]
-    SSDs.sort()
-    acc_per_SSD = pd.DataFrame()
-    for ssd in SSDs:
-        curr_means = abcd_data.query(
-            "SSDDur == %s and correct_stop==0.0" % ssd
-        ).groupby('NARGUID').mean()['choice_accuracy']
-        curr_means.name = ssd
-        acc_per_SSD = pd.concat([acc_per_SSD, curr_means], 1, sort=True)
-
-    go_accs = abcd_data.query(
-            "trial_type == 'GoTrial' and correct_go_response in ['1.0', '0.0']"
-        ).groupby('NARGUID').mean()['choice_accuracy']
-    go_accs.name = -1
-    acc_per_SSD = pd.concat([acc_per_SSD, go_accs], 1, sort=True)
-
-    p = Symbol('p')
-    guess_mean = acc_per_SSD.mean()[0.0]
-    go_mean = acc_per_SSD.mean()[-1]
-    p_guess_per_SSD = []
-    for ssd in SSDs:
-        curr_mean = acc_per_SSD.mean()[ssd]
-        solution = solve(p*guess_mean + (1-p)*go_mean - curr_mean, p)
-        assert len(solution) == 1
-        p_guess_per_SSD.append(solution[0])
-    print(p_guess_per_SSD)
+    p_guess_df = pd.read_csv('%s/p_guess_per_ssd.csv' % args.abcd_dir)
 
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
@@ -100,16 +73,13 @@ if __name__ == '__main__':
     params = {
         'n_trials_stop': args.n_trials,
         'n_trials_go': args.n_trials,
-        'SSDs': SSDs,
+        'SSDs': p_guess_df.columns,
         'guess_function': sample_exgauss,
-        'p_guess_stop': p_guess_per_SSD,
+        'p_guess_stop': p_guess_df.values,
     }
 
     for sim_key in simulator_dict:
         print(sim_key)
-        # if sim_key == 'graded_mu_go_log':
-        #     params['noise_go'] = 4
-        #     params['noise_stop'] = 4
         data = simulator_dict[sim_key].simulate(params)
         data['simulation'] = sim_key
         print('saving...')

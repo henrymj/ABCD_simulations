@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=ABCD_vis
-#SBATCH --output=.out/ABCD_vis_%j.out
-#SBATCH --error=.err/ABCD_vis_%j.err
-#SBATCH --time=4:00:00
+#SBATCH --job-name=ABCD_SSRT_indiv
+#SBATCH --output=.out/ABCD_SSRT_indiv_%j.out
+#SBATCH --error=.err/ABCD_SSRT_indiv_%j.err
+#SBATCH --time=24:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=poldracklab@stanford.edu
 #SBATCH --cpus-per-task=16
@@ -14,4 +14,4 @@ export PYTHONPATH=""
 source ~/miniconda3/etc/profile.d/conda.sh 
 conda activate py3-env
 
-python visualize_simulations.py
+python compute_SSRTs.py
