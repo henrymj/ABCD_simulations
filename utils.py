@@ -237,8 +237,11 @@ class SimulateData():
         # TODO: clean up these lines? -
         # if 0 is returned, it's viewed as an int,
         # not a float, so it needs to be converted
-        self._n_guess_go = np.rint(float(p_guess_go * self._n_trials_go))
-        self._n_guess_stop = {SSD: np.rint(float(p * self._n_trials_stop[SSD]))
+        self._n_guess_go = self._at_least_0(
+            np.rint(float(
+                    p_guess_go * self._n_trials_go)))
+        self._n_guess_stop = {SSD: self._at_least_0(
+                                np.rint(float(p * self._n_trials_stop[SSD])))
                               for SSD, p in zip(params['SSDs'],
                                                 p_guess_per_SSD)}
 

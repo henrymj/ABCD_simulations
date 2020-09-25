@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=sim_indiv
-#SBATCH --output=.out/sim_indiv_%j.out
-#SBATCH --error=.err/sim_indiv_%j.err
+#SBATCH --output=.out/sim_%j.out
+#SBATCH --error=.err/sim_%j.err
 #SBATCH --time=8:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=poldracklab@stanford.edu
