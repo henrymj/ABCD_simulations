@@ -8,7 +8,7 @@ from sympy import Symbol
 
 from stopsignalmetrics import SSRTmodel
 from utils import SimulateData
-from simulate_individual import generate_exgauss_sampler_from_fit
+from simulate import generate_exgauss_sampler_from_fit
 
 
 def get_args():
