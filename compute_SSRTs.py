@@ -35,8 +35,10 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
             ).copy()
         curr_metrics = ssrtmodel.fit_transform(curr_df)
         if (curr_metrics['p_respond'] == 0) | (curr_metrics['p_respond'] == 1):
+            # curr_info = [v for v in curr_metrics.values()] +\
+            #         [SSD, np.nan, np.nan]
             curr_info = [v for v in curr_metrics.values()] +\
-                    [SSD, np.nan, np.nan]
+                    [SSD]           
         # else:
         #     goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
         #                                              SSD,
