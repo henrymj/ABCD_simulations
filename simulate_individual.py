@@ -10,7 +10,7 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_trials', default=10000)
+    parser.add_argument('--n_trials', default=20000)
     parser.add_argument('--abcd_dir', default='./abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--out_dir', default='./simulated_data',
@@ -105,11 +105,11 @@ if __name__ == '__main__':
         'p_guess_stop': p_guess_per_SSD,
     }
 
-    for sim_key in ['graded_mu_go_log']:
+    for sim_key in simulator_dict:
         print(sim_key)
-        if sim_key == 'graded_mu_go_log':
-            params['noise_go'] = 4
-            params['noise_stop'] = 4
+        # if sim_key == 'graded_mu_go_log':
+        #     params['noise_go'] = 4
+        #     params['noise_stop'] = 4
         data = simulator_dict[sim_key].simulate(params)
         data['simulation'] = sim_key
         print('saving...')
