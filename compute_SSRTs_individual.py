@@ -37,20 +37,27 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
         if (curr_metrics['p_respond'] == 0) | (curr_metrics['p_respond'] == 1):
             curr_info = [v for v in curr_metrics.values()] +\
                     [SSD, np.nan, np.nan]
-        else:
-            goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
-                                                     SSD,
-                                                     SSD_guess_dict)
-            SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
-                                               goRTs_w_guesses)
-            SSRT_w_graded = SSRT_wReplacement(curr_metrics,
-                                              graded_go_dict[SSD])
+        # else:
+        #     goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
+        #                                              SSD,
+        #                                              SSD_guess_dict)
+        #     SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
+        #                                        goRTs_w_guesses)
+        #     SSRT_w_graded = SSRT_wReplacement(curr_metrics,
+        #                                       graded_go_dict[SSD])
 
+        #     curr_info = [v for v in curr_metrics.values()] +\
+        #                 [SSD, SSRT_w_guesses, SSRT_w_graded]
+        # info.append(curr_info)
+        # cols = [k for k in curr_metrics.keys()] +\
+        #        ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
+        else:
             curr_info = [v for v in curr_metrics.values()] +\
-                        [SSD, SSRT_w_guesses, SSRT_w_graded]
+                        [SSD]
         info.append(curr_info)
         cols = [k for k in curr_metrics.keys()] +\
-               ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
+               ['SSD']
+
     return pd.DataFrame(
         info,
         columns=cols)
