@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 import argparse
-from sympy.solvers import solve
-from sympy import Symbol
 import scipy.stats as sstats
 
 from utils import SimulateData
@@ -10,7 +8,7 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_trials', default=10000)
+    parser.add_argument('--n_trials', default=125000)
     parser.add_argument('--abcd_dir', default='./abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--out_dir', default='./simulated_data',

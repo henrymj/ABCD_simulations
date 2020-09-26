@@ -35,30 +35,30 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
             ).copy()
         curr_metrics = ssrtmodel.fit_transform(curr_df)
         if (curr_metrics['p_respond'] == 0) | (curr_metrics['p_respond'] == 1):
+            curr_info = [v for v in curr_metrics.values()] +\
+                    [SSD, np.nan, np.nan]
             # curr_info = [v for v in curr_metrics.values()] +\
-            #         [SSD, np.nan, np.nan]
-            curr_info = [v for v in curr_metrics.values()] +\
-                    [SSD]           
-        # else:
-        #     goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
-        #                                              SSD,
-        #                                              SSD_guess_dict)
-        #     SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
-        #                                        goRTs_w_guesses)
-        #     SSRT_w_graded = SSRT_wReplacement(curr_metrics,
-        #                                       graded_go_dict[SSD])
-
-        #     curr_info = [v for v in curr_metrics.values()] +\
-        #                 [SSD, SSRT_w_guesses, SSRT_w_graded]
-        # info.append(curr_info)
-        # cols = [k for k in curr_metrics.keys()] +\
-        #        ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
+            #         [SSD]
         else:
+            goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
+                                                     SSD,
+                                                     SSD_guess_dict)
+            SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
+                                               goRTs_w_guesses)
+            SSRT_w_graded = SSRT_wReplacement(curr_metrics,
+                                              graded_go_dict[SSD])
+
             curr_info = [v for v in curr_metrics.values()] +\
-                        [SSD]
+                        [SSD, SSRT_w_guesses, SSRT_w_graded]
         info.append(curr_info)
         cols = [k for k in curr_metrics.keys()] +\
-               ['SSD']
+               ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
+        # else:
+        #     curr_info = [v for v in curr_metrics.values()] +\
+        #                 [SSD]
+        # info.append(curr_info)
+        # cols = [k for k in curr_metrics.keys()] +\
+        #        ['SSD']
 
     return pd.DataFrame(
         info,
@@ -163,10 +163,10 @@ if __name__ == '__main__':
 
     graded_go_dict = {}
     for SSD in SSDs:
-        # graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
-        #     args.n_graded_go_trials,
-        #     SSD)
-        graded_go_dict[SSD] = [0]
+        graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
+            args.n_graded_go_trials,
+            SSD)
+        # graded_go_dict[SSD] = [0]
 
     # CALCULATE SSRT
     for data_file in glob(path.join(args.sim_dir, '*.csv')):
