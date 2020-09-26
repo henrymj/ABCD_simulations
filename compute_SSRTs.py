@@ -176,4 +176,4 @@ if __name__ == '__main__':
         out_df = generate_out_df(pd.read_csv(data_file),
                                  SSD_guess_dict,
                                  graded_go_dict)
-        out_df.to_csv(path.join(args.out_dir, 'indiv_%s.csv' % sim_type))
+        out_df.to_csv(path.join(args.out_dir, '%s.csv' % sim_type))
