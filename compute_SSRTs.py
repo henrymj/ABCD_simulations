@@ -72,6 +72,9 @@ def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict):
         guess_RTs = sample_exgauss(curr_n)
         guess_RTs.sort()
         return guess_RTs
+    elif p_guess <= 0:  # SSDs 550 and 650
+        goRTs.sort()
+        return goRTs
     else:
         # Equation logic:
         # p_guess = n_guess / (n_guess + curr_n) =>
