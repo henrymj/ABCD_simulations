@@ -8,7 +8,7 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_trials', default=125000)
+    parser.add_argument('--n_trials', default=150000)
     parser.add_argument('--abcd_dir', default='./abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--out_dir', default='./simulated_data',
@@ -58,14 +58,12 @@ if __name__ == '__main__':
         'standard': SimulateData(),
         'guesses': SimulateData(guesses=True),
         'graded_mu_go_log': SimulateData(mu_go_grader='log'),
-        'graded_mu_go_linear': SimulateData(mu_go_grader='linear')
     }
 
     group_data_dict = {
         'standard': pd.DataFrame(),
         'guesses': pd.DataFrame(),
         'graded_mu_go_log': pd.DataFrame(),
-        'graded_mu_go_linear': pd.DataFrame(),
     }
 
     params = {

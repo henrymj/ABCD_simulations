@@ -17,7 +17,7 @@ def get_args():
                         help='location of simulated data')
     parser.add_argument('--out_dir', default='./ssrt_metrics',
                         help='location to save ssrt metrics')
-    parser.add_argument('--n_graded_go_trials', default=125000)
+    parser.add_argument('--n_graded_go_trials', default=150000)
     args = parser.parse_args()
     return(args)
 
