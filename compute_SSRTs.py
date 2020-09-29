@@ -3,8 +3,7 @@ import pandas as pd
 import argparse
 from os import path
 from glob import glob
-from sympy.solvers import solve
-from sympy import Symbol
+import scipy.stats as sstats
 
 from stopsignalmetrics import SSRTmodel
 from utils import SimulateData
@@ -102,6 +101,8 @@ def simulate_graded_RTs_and_sort(n_trials, SSD):
                                               params)
     goRTs = data_dict['RT']
     goRTs.sort()
+    for p in np.arrange(0, 105, 5):
+        print(p, sstats.scoreatpercentile(goRTs, p))
     return goRTs
 
 
