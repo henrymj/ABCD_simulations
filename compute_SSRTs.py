@@ -101,6 +101,7 @@ def simulate_graded_RTs_and_sort(n_trials, SSD):
                                               params)
     goRTs = data_dict['RT']
     goRTs.sort()
+    print('SSD')
     for p in np.arrange(0, 105, 5):
         print(p, sstats.scoreatpercentile(goRTs, p))
     return goRTs
