@@ -135,8 +135,9 @@ if __name__ == '__main__':
     abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
     p_guess_df = pd.read_csv('%s/p_guess_per_ssd.csv' % args.abcd_dir)
 
-    SSD_guess_dict = {col: float(p_guess_df[col].values[0]) for col
+    SSD_guess_dict = {float(col): float(p_guess_df[col].values[0]) for col
                       in p_guess_df.columns}
+    print(SSD_guess_dict)
 
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
