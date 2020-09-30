@@ -97,7 +97,7 @@ def simulate_graded_RTs_and_sort(n_trials, SSD, verbose=False):
 
     data_dict = simulator._simulate_go_trials(simulator._init_data_dict(),
                                               params)
-    goRTs = data_dict['RT']
+    goRTs = data_dict['RT'].copy()
     goRTs.sort()
     if verbose:
         print(SSD)
@@ -123,7 +123,7 @@ def SSRT_wReplacement(metrics, sorted_go_RTs, verbose=False):
     goRTs_w_replacements = np.concatenate((
         sorted_go_RTs,
         [metrics['max_RT']] * metrics['omission_count']))
-
+    goRTs_w_replacements.sort()
     nrt = get_nth_RT(P_respond, goRTs_w_replacements)
     if verbose:
         print('SSD', metrics['mean_SSD'])
