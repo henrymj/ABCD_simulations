@@ -42,9 +42,13 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
             goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
                                                      SSD,
                                                      SSD_guess_dict)
+            if SSD < 200:
+                print('w guesses:')
             SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
                                                goRTs_w_guesses,
                                                verbose=(SSD < 200))
+            if SSD < 200:
+                print('w graded:')
             SSRT_w_graded = SSRT_wReplacement(curr_metrics,
                                               graded_go_dict[SSD].copy(),
                                               verbose=(SSD < 200))
@@ -122,8 +126,9 @@ def SSRT_wReplacement(metrics, sorted_go_RTs, verbose=False):
 
     nrt = get_nth_RT(P_respond, goRTs_w_replacements)
     if verbose:
-        print('nrt', nrt)
         print('SSD', metrics['mean_SSD'])
+        print('p_respond', P_respond)
+        print('nrt', nrt)
     return nrt - metrics['mean_SSD']
 
 
