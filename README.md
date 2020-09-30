@@ -2,7 +2,7 @@
 
 ## Running:
 
-1. `preprocess_ABCD_get_metrics.ipynb` drops participants affected by issue 3 and adds a choice accuracy column as preprocessing. It then computes a) the SSD distributions for each participant, b) the accuracy and subsequent P(guess) for each SSD, and c) the inhibition function of the dataset. Each of these is saved to abcd_data/
+1. `preprocess_ABCD_get_metrics.ipynb` drops participants affected by issue 3 and adds a choice accuracy column as preprocessing. It then computes a) the SSD distributions for each participant, b) the accuracy and subsequent P(guess) for each SSD, and c) the inhibition function of the dataset. Each of these is saved to abcd_data/, but this is hidden from github.
   
 2. `run_simulate.batch` runs `simulate.py`, which simulates data using each of the 3 models defined in Bissett, Hagen et al. (2020). The class which implements the simulations is found in `utils.py`. The outputs are saved to simulated_data/
   
