@@ -276,7 +276,7 @@ class SimulateData():
         # TODO: move default dict to json, read in
         default_dict = {'mu_go': .2,
                         'mu_stop': .4,
-                        'noise_go':  3.5,  # 2,  # 1.13,
+                        'noise_go':  3.2,  # 2,  # 1.13,
                         'noise_stop': 3.5,  # 2,  # 1.75,
                         'threshold': 100,
                         'nondecision_go': 50,
