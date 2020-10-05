@@ -29,12 +29,18 @@ class SimulateData():
             assert mu_go_grader in ['log', 'linear']
             self._mu_go_grader = mu_go_graders[mu_go_grader]
 
-    def simulate(self, params={}):
+    def simulate(self, params={}):  # RP - passing a mutable default https://florimond.dev/blog/articles/2018/08/python-mutable-defaults-are-the-source-of-all-evil/
+        # it's not clear why you are setting up params here, rather than in the global __init__
+        # any then using a more global self.params 
         params = self._init_params(params)
         data_dict = self._init_data_dict()
         self._set_n_trials(params)
         self._set_n_guesses(params)
         for ssd_idx, SSD in enumerate(params['SSDs']):
+            # RP: I find the use of a generic overall structure like data_dict to make things somewhat
+            # difficult to parse
+            # could you instead create different variables for each variable type, and then 
+            # assemble them in a more transparent way?
             data_dict = self._simulate_guesses(data_dict, params, SSD)
             data_dict = self._simulate_stop_trials(data_dict, params,
                                                    SSD)
@@ -44,6 +50,8 @@ class SimulateData():
         data_df = pd.DataFrame.from_dict(data_dict)
         data_df['block'] = 0
         for rt_type in ['go', 'stop']:
+            # RP: I don't generally like this kind of mixing of np and pandas
+            # - are you sure this performs as is it should?
             data_df['{}RT'.format(rt_type)] = np.where(
                 data_df['condition'] == rt_type,
                 data_df['RT'],
@@ -160,7 +168,7 @@ class SimulateData():
             if time >= trial['nondecision_go']:
                 go_accum = self._at_least_0(
                     go_accum + trial['mu_go'] -
-                    trial['inhibition_interaction']*stop_accum +
+                    trial['inhibition_interaction']*stop_accum + # this line break after operator could be confusing
                     np.random.normal(loc=0, scale=trial['noise_go'])
                 )
                 trial['process_go'].append(go_accum)
@@ -427,6 +435,7 @@ def _moving_average(a, n=3, zero_padded=False):
     else:
         return ret[n - 1:] / n
 
+# I'm confused about the public vs private interfaces for this function...
 def joyplot(data, column=None, by=None, grid=False,
             xlabelsize=None, xrot=None, ylabelsize=None, yrot=None,
             ax=None, figsize=None,
@@ -732,7 +741,7 @@ def _joyplot(data,
             return color
         elif isinstance(colormap, list):
             return colormap[j](i/num_axes)
-        elif color is None and colormap is None:
+        elif color is None and colormap is None: # RP: color is None is redundant here
             num_cycle_colors = len(plt.rcParams['axes.prop_cycle'].by_key()['color'])
             return plt.rcParams['axes.prop_cycle'].by_key()['color'][j % num_cycle_colors]
         else:
@@ -748,7 +757,7 @@ def _joyplot(data,
         global_x_range = [i for i in global_x_range if i >= 0 and i <=3000]
     else:
         global_x_range = _x_range(x_range, 0.0)
-    global_x_min, global_x_max = min(global_x_range), max(global_x_range)
+    global_x_min, global_x_max = min(global_x_range), max(global_x_range) # RP: these variables don't seem to be be used
 
     # Each plot will have its own axis
     fig, axes = _subplots(naxes=num_axes, ax=ax, squeeze=False,
@@ -758,7 +767,7 @@ def _joyplot(data,
 
     # The legend must be drawn in the last axis if we want it at the bottom.
     if loc in (3, 4, 8) or 'lower' in str(loc):
-        legend_axis = num_axis - 1
+        legend_axis = num_axis - 1 # this variable doesn't seem to be defined above
     else:
         legend_axis = 0
 
