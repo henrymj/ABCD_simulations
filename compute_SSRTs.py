@@ -32,7 +32,7 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
 
     for SSD in SSDs:
         curr_df = data.query(
-            "condition=='go' | condition=='stop' and SSD == %s" % SSD
+            "condition=='go' | (condition=='stop' and SSD == %s)" % SSD
             ).copy()
         curr_metrics = ssrtmodel.fit_transform(curr_df)
         if (curr_metrics['p_respond'] == 0) | (curr_metrics['p_respond'] == 1):
@@ -87,7 +87,7 @@ def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict):
 
 def simulate_graded_RTs_and_sort(n_trials, SSD, verbose=False):
     simulator = SimulateData()
-    params = simulator._init_params({})
+    params = simulator._init_params()
     params['n_trials_stop'] = n_trials
     params['n_trials_go'] = n_trials
 

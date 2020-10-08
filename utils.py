@@ -29,7 +29,8 @@ class SimulateData():
             assert mu_go_grader in ['log', 'linear']
             self._mu_go_grader = mu_go_graders[mu_go_grader]
 
-    def simulate(self, params={}):
+    def simulate(self, params=None):
+        params = params if params else {}
         params = self._init_params(params)
         data_dict = self._init_data_dict()
         self._set_n_trials(params)
@@ -40,17 +41,7 @@ class SimulateData():
                                                    SSD)
         data_dict = self._simulate_go_trials(data_dict, params)
 
-        # convert to dataframe
-        data_df = pd.DataFrame.from_dict(data_dict)
-        data_df['block'] = 0
-        for rt_type in ['go', 'stop']:
-            data_df['{}RT'.format(rt_type)] = np.where(
-                data_df['condition'] == rt_type,
-                data_df['RT'],
-                np.nan)
-        del data_df['RT']
-
-        return data_df
+        return self._convert_data_to_df(data_dict)
 
     def _simulate_guesses(self, data_dict, params, SSD):
         if SSD is None:  # go trials
@@ -196,6 +187,28 @@ class SimulateData():
         trial['accum_stop'] = stop_accum
         return self._update_data_dict(data_dict, trial)
 
+    def _convert_data_to_df(self, data_dict):
+        data_df = pd.DataFrame.from_dict(data_dict)
+        data_df['block'] = 0
+        for rt_type in ['go', 'stop']:
+            data_df['{}RT'.format(rt_type)] = np.where(
+                data_df['condition'] == rt_type,
+                data_df['RT'],
+                np.nan)
+
+        # checks to make sure splitting was correct
+        go_rt_idx = data_df[data_df.goRT.notnull()].index
+        stop_rt_idx = data_df[data_df.stopRT.notnull()].index
+        all_rt_idx = data_df[data_df.RT.notnull()].index
+
+        assert np.allclose(go_rt_idx.difference(stop_rt_idx), go_rt_idx)
+        assert np.allclose(stop_rt_idx.difference(go_rt_idx), stop_rt_idx)
+        assert np.allclose(stop_rt_idx.union(go_rt_idx), all_rt_idx)
+
+        del data_df['RT']
+
+        return data_df
+
     def _set_n_trials(self, params):
         num_SSDs = len(params['SSDs'])
         n_trials_stop = params['n_trials_stop']
@@ -272,7 +285,8 @@ class SimulateData():
             SSD = max_SSD
         return self._at_least_0((SSD/max_SSD) * mu_go)
 
-    def _init_params(self, params):
+    def _init_params(self, params=None):
+        params = params if params else {}
         # TODO: move default dict to json, read in
         default_dict = {'mu_go': .2,
                         'mu_stop': .4,
