@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     for sub in args.subjects:
         SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
-        params['SSD'] = SSDs
+        params['SSDs'] = SSDs
         params['p_guess_stop'] = list(p_guess_df[SSDs].values.astype(float)[0])
 
         params['mu_go'] = mus_dict[sub]['go']
