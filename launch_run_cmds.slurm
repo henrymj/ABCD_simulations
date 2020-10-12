@@ -12,7 +12,7 @@
 #-----------
 export LAUNCHER_PLUGIN_DIR=$LAUNCHER_DIR/plugins
 export LAUNCHER_RMI=SLURM
-export LAUNCHER_JOB_FILE=run_cmds.sh
+export LAUNCHER_JOB_FILE=run_all_sims.sh
 $LAUNCHER_DIR/paramrun
 echo " "
 echo " Parameteric Job Complete"
