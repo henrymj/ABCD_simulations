@@ -3,7 +3,6 @@ import pandas as pd
 import argparse
 from os import path
 from glob import glob
-import scipy.stats as sstats
 
 from stopsignalmetrics import SSRTmodel
 from utils import SimulateData
@@ -42,16 +41,10 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
             goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
                                                      SSD,
                                                      SSD_guess_dict)
-            if SSD < 200:
-                print('w guesses:')
             SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
-                                               goRTs_w_guesses,
-                                               verbose=(SSD < 200))
-            if SSD < 200:
-                print('w graded:')
+                                               goRTs_w_guesses)
             SSRT_w_graded = SSRT_wReplacement(curr_metrics,
-                                              graded_go_dict[SSD].copy(),
-                                              verbose=(SSD < 200))
+                                              graded_go_dict[SSD].copy())
 
             curr_info = [v for v in curr_metrics.values()] +\
                         [SSD, SSRT_w_guesses, SSRT_w_graded]
@@ -85,7 +78,7 @@ def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict):
         return all_RTs
 
 
-def simulate_graded_RTs_and_sort(n_trials, SSD, verbose=False):
+def simulate_graded_RTs_and_sort(n_trials, SSD):
     simulator = SimulateData()
     params = simulator._init_params()
     params['n_trials_stop'] = n_trials
@@ -99,10 +92,6 @@ def simulate_graded_RTs_and_sort(n_trials, SSD, verbose=False):
                                               params)
     goRTs = data_dict['RT'].copy()
     goRTs.sort()
-    if verbose:
-        print(SSD)
-        for p in np.arange(0, 100, 5):
-            print(p, sstats.scoreatpercentile(goRTs, p))
     return goRTs
 
 
@@ -118,17 +107,13 @@ def get_nth_RT(P_respond, goRTs):
     return nth_RT
 
 
-def SSRT_wReplacement(metrics, sorted_go_RTs, verbose=False):
+def SSRT_wReplacement(metrics, sorted_go_RTs):
     P_respond = metrics['p_respond']
     goRTs_w_replacements = np.concatenate((
         sorted_go_RTs,
         [metrics['max_RT']] * metrics['omission_count']))
     goRTs_w_replacements.sort()
     nrt = get_nth_RT(P_respond, goRTs_w_replacements)
-    if verbose:
-        print('SSD', metrics['mean_SSD'])
-        print('p_respond', P_respond)
-        print('nrt', nrt)
     return nrt - metrics['mean_SSD']
 
 
@@ -141,7 +126,6 @@ if __name__ == '__main__':
 
     SSD_guess_dict = {float(col): float(p_guess_df[col].values[0]) for col
                       in p_guess_df.columns}
-    print(SSD_guess_dict)
 
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
@@ -153,8 +137,7 @@ if __name__ == '__main__':
     for SSD in [i for i in abcd_data.SSDDur.unique() if i == i]:
         graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
             args.n_graded_go_trials,
-            SSD,
-            verbose=(SSD < 200))
+            SSD)
 
     # CALCULATE SSRT
     for data_file in glob(path.join(args.sim_dir, '*.csv')):

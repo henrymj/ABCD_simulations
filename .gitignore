@@ -1,6 +1,7 @@
 abcd_data/*
 simulated_data/*.csv
 simulated_data/individual_data/*.csv
+ssrt_metrics/individual_metrics/*.csv
 .out
 .err
 .ipynb_checkpoints
