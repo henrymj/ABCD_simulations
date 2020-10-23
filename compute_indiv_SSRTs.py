@@ -47,8 +47,7 @@ if __name__ == '__main__':
     for SSD in [i for i in abcd_data.SSDDur.unique() if i == i]:
         graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
             args.n_graded_go_trials,
-            SSD,
-            verbose=(SSD < 200))
+            SSD)
 
     # CALCULATE SSRT
     for sub in args.subjects:
