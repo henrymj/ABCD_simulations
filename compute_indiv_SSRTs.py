@@ -57,5 +57,6 @@ if __name__ == '__main__':
                 ).replace('.csv', '')
             out_df = generate_out_df(pd.read_csv(data_file),
                                      SSD_guess_dict,
-                                     graded_go_dict)
+                                     graded_go_dict,
+                                     sample_exgauss)
             out_df.to_csv(path.join(args.out_dir, '%s_%s.csv' % sim_type, sub))

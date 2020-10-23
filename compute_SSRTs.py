@@ -22,7 +22,7 @@ def get_args():
     return(args)
 
 
-def generate_out_df(data, SSD_guess_dict, graded_go_dict):
+def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
     info = []
     ssrtmodel = SSRTmodel(model='replacement')
     goRTs = data.loc[data.goRT.notnull(), 'goRT'].values
@@ -40,7 +40,8 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
         else:
             goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
                                                      SSD,
-                                                     SSD_guess_dict)
+                                                     SSD_guess_dict,
+                                                     guess_sampler)
             SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
                                                goRTs_w_guesses)
             SSRT_w_graded = SSRT_wReplacement(curr_metrics,
@@ -57,11 +58,11 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict):
         columns=cols)
 
 
-def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict):
+def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict, guess_sampler):
     curr_n = len(goRTs)
     p_guess = SSD_guess_dict[SSD]
     if p_guess == 1.0:
-        guess_RTs = sample_exgauss(curr_n)
+        guess_RTs = guess_sampler(curr_n)
         guess_RTs.sort()
         return guess_RTs
     elif p_guess <= 0:  # SSDs 550 and 650
@@ -72,7 +73,7 @@ def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict):
         # p_guess = n_guess / (n_guess + curr_n) =>
         # n_guess = (p_guess * curr_n) / (1 - p_guess)
         n_guess = int(np.rint(float((p_guess*curr_n)/(1-p_guess))))
-        guess_RTs = sample_exgauss(n_guess)
+        guess_RTs = guess_sampler(n_guess)
         all_RTs = np.concatenate([goRTs, guess_RTs])
         all_RTs.sort()
         return all_RTs
@@ -146,5 +147,6 @@ if __name__ == '__main__':
             ).replace('.csv', '')
         out_df = generate_out_df(pd.read_csv(data_file),
                                  SSD_guess_dict,
-                                 graded_go_dict)
+                                 graded_go_dict,
+                                 sample_exgauss)
         out_df.to_csv(path.join(args.out_dir, '%s.csv' % sim_type))
