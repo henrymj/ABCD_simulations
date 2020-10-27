@@ -2,6 +2,7 @@
 # coding: utf-8
 
 # In[22]:
+import json
 import pandas as pd
 import numpy as np
 from glob import glob
@@ -38,6 +39,11 @@ if __name__ == '__main__':
     abcd_data = pd.read_csv('abcd_data/minimal_abcd_clean.csv')
     all_subs = abcd_data.NARGUID.unique()
 
+    with open('abcd_data/individual_mus.json') as json_file:
+        mus_dict = json.load(json_file)
+
+    all_subs_filtered = set(all_subs).difference(set(mus_dict['prob_subs']))
+    assert len(all_subs_filtered) == (len(all_subs) - len(mus_dict['prob_subs']))
     # ## get finished subs
     # In[14]:
 
@@ -55,8 +61,8 @@ if __name__ == '__main__':
 
     # ## get remainder and write script sh file
     # In[28]:
-    remaining_subs = set(all_subs).difference(finished_subs)
-    assert len(remaining_subs) == (len(all_subs) - len(finished_subs))
+    remaining_subs = set(all_subs_filtered).difference(finished_subs)
+    assert len(remaining_subs) == (len(all_subs_filtered) - len(finished_subs))
 
     remaining_subs = np.array(list(remaining_subs))
 
