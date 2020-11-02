@@ -1,5 +1,6 @@
 import pandas as pd
 import argparse
+import json
 from os import path
 from glob import glob
 
@@ -37,20 +38,31 @@ if __name__ == '__main__':
     SSD_guess_dict = {float(col): float(p_guess_df[col].values[0]) for col
                       in p_guess_df.columns}
 
+    indiv_ssd_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir,
+                                  index_col=0)
+    with open('%s/individual_mus.json' % args.abcd_dir) as json_file:
+        mus_dict = json.load(json_file)
+
     SSD0_RTs = abcd_data.query(
         "SSDDur == 0.0 and correct_stop==0.0"
         ).stop_rt_adjusted.values
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
-    # SET UP GRADED MU GO DISTS
-    graded_go_dict = {}
-    for SSD in [i for i in abcd_data.SSDDur.unique() if i == i]:
-        graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
-            args.n_graded_go_trials,
-            SSD)
-
     # CALCULATE SSRT
     for sub in args.subjects:
+        # set up sub specific graded_mu_go RTs for SSDs
+        params = {
+            'mu_go': mus_dict[sub]['go'],
+            'mu_stop': mus_dict[sub]['stop']
+        }
+        sub_SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
+        graded_go_dict = {}
+        for SSD in sub_SSDs:
+            graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
+                args.n_graded_go_trials,
+                SSD,
+                sub_params=params)
+
         for data_file in glob(path.join(args.sim_dir, '*%s*.csv' % sub)):
             sim_type = path.basename(
                 data_file
