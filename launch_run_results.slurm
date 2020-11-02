@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # SLURM control file automatically created by launch
-#SBATCH -N 1 # number of nodes requested - set to ceil(n rows in command script / 48)
-#SBATCH -o .out/launch.o%j # Name of the output file )
+#SBATCH -N 3
+#SBATCH -o .out/launch.o%j
 #SBATCH -p normal
-#SBATCH -t 04:00:00 # set to 2 hours - make sure that each script will finish in less than 2 hours
-#SBATCH -n 2 # total number of mpi tasks requested - set to n rows in command script
+#SBATCH -t 02:30:00
+#SBATCH -n 3
 # Job Submission
 #-----------
 export LAUNCHER_PLUGIN_DIR=$LAUNCHER_DIR/plugins
