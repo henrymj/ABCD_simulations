@@ -8,6 +8,8 @@
 #SBATCH -n 3
 # Job Submission
 #-----------
+module load launcher
+module load ooops
 export LAUNCHER_PLUGIN_DIR=$LAUNCHER_DIR/plugins
 export LAUNCHER_RMI=SLURM
 export LAUNCHER_JOB_FILE=run_results.sh
