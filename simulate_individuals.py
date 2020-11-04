@@ -70,7 +70,6 @@ if __name__ == '__main__':
         params['mu_stop'] = mus_dict[sub]['stop']
 
         for sim_key in simulator_dict:
-            print(sim_key)
             data = simulator_dict[sim_key].simulate(params)
             data['simulation'] = sim_key
             data.to_csv('%s/%s_%s.csv' % (args.out_dir, sim_key, sub))

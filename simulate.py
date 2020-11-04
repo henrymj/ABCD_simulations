@@ -25,7 +25,6 @@ def generate_exgauss_sampler_from_fit(data,
 
     def sample_exgauss(sample_size=default_sample_size,
                        beta=FIT_BETA, scale=FIT_SCALE, loc=FIT_LOC):
-        print('sampling')
         exp_out = np.random.exponential(scale=beta, size=sample_size)
         norm_out = np.random.normal(scale=scale, size=sample_size)
         out = (exp_out+norm_out) + loc
