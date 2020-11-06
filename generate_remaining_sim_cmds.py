@@ -69,7 +69,7 @@ if __name__ == '__main__':
     # In[31]:
     nsubs_per_job = 48
     nlines = 0
-    with open('run_remaining_sims.sh', 'w') as f:
+    with open('run_sims.sh', 'w') as f:
         for start_idx in range(0, len(remaining_subs), nsubs_per_job):
             end_idx = start_idx + nsubs_per_job
             if end_idx > len(remaining_subs):
@@ -82,11 +82,11 @@ if __name__ == '__main__':
     n_line_str = '#SBATCH -n %s # total number of mpi tasks requested - set to n rows in command script\n' % nlines
 
     replace(
-        'launch_remaining_sim_cmds.slurm',
+        'launch_sim_cmds.slurm',
         '#SBATCH -N',
         N_line_str)
     replace(
-        'launch_remaining_sim_cmds.slurm',
+        'launch_sim_cmds.slurm',
         '#SBATCH -n',
         n_line_str)
     # prints so you can compare the lines of the slurm file
