@@ -59,12 +59,16 @@ if __name__ == '__main__':
     # ## get remainder and write script sh file
     # In[28]:
     remaining_subs = set(simulated_subs).difference(subs_w_ssrts)
+    print(len(remaining_subs))
+    print(len(simulated_subs))
+    print(len(subs_w_ssrts))
     assert len(remaining_subs) == (len(simulated_subs) - len(subs_w_ssrts))
 
     remaining_subs = np.array(list(remaining_subs))
 
     # In[31]:
     nsubs_per_job = 48
+    njobs_per_node = 36
     nlines = 0
     with open('run_SSRTs.sh', 'w') as f:
         for start_idx in range(0, len(remaining_subs), nsubs_per_job):
@@ -75,7 +79,7 @@ if __name__ == '__main__':
             f.write(f'python compute_indiv_SSRTs.py --subjects {substr}\n')
             nlines += 1
 
-    N_line_str = '#SBATCH -N %d # number of nodes requested - set to ceil(n rows in command script / 48)\n' % int(np.ceil(nlines/nsubs_per_job))
+    N_line_str = '#SBATCH -N %d # number of nodes requested - set to ceil(n rows in command script / 36)\n' % int(np.ceil(nlines/njobs_per_node))
     n_line_str = '#SBATCH -n %s # total number of mpi tasks requested - set to n rows in command script\n' % nlines
 
     replace(
