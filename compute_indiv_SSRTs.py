@@ -51,10 +51,13 @@ if __name__ == '__main__':
     # CALCULATE SSRT
     for sub in args.subjects:
         # set up sub specific graded_mu_go RTs for SSDs
-        params = {
-            'mu_go': mus_dict[sub]['go'],
-            'mu_stop': mus_dict[sub]['stop']
-        }
+        try:
+            params = {
+                'mu_go': mus_dict[sub]['go'],
+                'mu_stop': mus_dict[sub]['stop']
+            }
+        except KeyError as err:
+            print("KeyError error for sub {0}: {1}".format(sub, err))
         sub_SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
         graded_go_dict = {}
         for SSD in sub_SSDs:

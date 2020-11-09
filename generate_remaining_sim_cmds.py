@@ -57,7 +57,7 @@ if __name__ == '__main__':
     # In[15]:
     finished_subs = finished_sub_dict['standard'].intersection(
         finished_sub_dict['guesses'],
-        finished_sub_dict['guesses'])
+        finished_sub_dict['graded_mu_go_log'])
 
     # ## get remainder and write script sh file
     # In[28]:
