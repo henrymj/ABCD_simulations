@@ -58,6 +58,7 @@ if __name__ == '__main__':
             }
         except KeyError as err:
             print("KeyError error for sub {0}: {1}".format(sub, err))
+            continue
         sub_SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
         graded_go_dict = {}
         for SSD in sub_SSDs:
