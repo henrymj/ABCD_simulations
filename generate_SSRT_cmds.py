@@ -40,7 +40,7 @@ def get_completed_subs(dir_path):
                 sim_key))
     completed_subs = sub_dict['standard'].intersection(
         sub_dict['guesses'],
-        sub_dict['guesses'])
+        sub_dict['graded_mu_go_log'])
     return completed_subs
 
 
