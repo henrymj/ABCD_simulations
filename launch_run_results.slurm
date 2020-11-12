@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # SLURM control file automatically created by launch
-#SBATCH -N 3
+#SBATCH -N 2
 #SBATCH -o .out/launch.o%j
 #SBATCH -p normal
 #SBATCH -t 02:30:00
