@@ -4,7 +4,7 @@
 #SBATCH -N 2
 #SBATCH -o .out/launch.o%j
 #SBATCH -p normal
-#SBATCH -t 02:30:00
+#SBATCH -t 03:00:00
 #SBATCH -n 3
 # Job Submission
 #-----------

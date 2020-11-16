@@ -37,10 +37,10 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
 
 
 # In[3]:
-
 if __name__ == '__main__':
-
+    print('getting args...')
     args = get_args()
+    print('job = %s' % args.job)
 
     print('loading in data...')
     ssrt_metrics = dd.read_csv('ssrt_metrics/individual_metrics/*.csv',
@@ -68,18 +68,6 @@ if __name__ == '__main__':
                       value_name='SSRT')
 
     if args.job in ['plot_ssrts', 'all']:
-        print('plotting SSRT by SSD...')
-        fig, ax = plt.subplots(1, 1, figsize=(14, 8))
-        _ = sns.lineplot(
-            x='SSD',
-            y='SSRT',
-            color='k',
-            style='underlying distribution',
-            data=melt_df[(melt_df['assumed distribution'] == 'standard') &
-                        (melt_df['SSD'] <= 650)].compute(),
-            linewidth=3)
-        plt.savefig('figures/SSRT_by_SSD.png')
-
         print('plotting SSRT by SSD Supplement...')
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
         keep_idx = (
@@ -87,14 +75,29 @@ if __name__ == '__main__':
             (melt_df['assumed distribution'] == melt_df['underlying distribution'])
             ) &\
             (melt_df['SSD'] <= 650)
+        subset_melt_df = melt_df[keep_idx].compute()
         _ = sns.lineplot(x='SSD',
                          y='SSRT',
                          hue='assumed distribution',
                          style='underlying distribution',
-                         data=melt_df[keep_idx].compute(),
+                         data=subset_melt_df,
                          palette=['k', '#1f77b4', '#ff7f0e'],
                          linewidth=3)
         plt.savefig('figures/SSRT_by_SSD_supplement.png')
+
+        print('plotting SSRT by SSD...')
+        fig_idx = (subset_melt_df['assumed distribution'] == 'standard') &\
+                  (subset_melt_df['SSD'] <= 650)
+        main_fix_melt_df = subset_melt_df[fig_idx]
+        fig, ax = plt.subplots(1, 1, figsize=(14, 8))
+        _ = sns.lineplot(
+            x='SSD',
+            y='SSRT',
+            color='k',
+            style='underlying distribution',
+            data=main_fix_melt_df,
+            linewidth=3)
+        plt.savefig('figures/SSRT_by_SSD.png')
 
     if args.job in ['plot_inhib_func', 'all']:
         print('plotting Inhibition Function...')
