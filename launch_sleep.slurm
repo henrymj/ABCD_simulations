@@ -4,8 +4,10 @@
 #SBATCH -N 1
 #SBATCH -o .out/launch.o%j
 #SBATCH -p normal
-#SBATCH -t 03:00:00
+#SBATCH -t 02:00:00
 #SBATCH -n 1
+#SBATCH --mail_type=ALL
+#SBATCH --mail_user=henrymj@stanford.edu
 # Job Submission
 #-----------
 module load launcher
