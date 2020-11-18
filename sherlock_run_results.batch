@@ -1,0 +1,22 @@
+#!/bin/bash
+#SBATCH --job-name=results
+#SBATCH --output=.out/results_%j.out
+#SBATCH --error=.err/results_%j.err
+#SBATCH --time=3:00:00
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=henrymj@stanford.edu
+#SBATCH --cpus-per-task=16
+#SBATCH --ntasks-per-node=3
+#SBATCH -p russpold,hns
+#SBATCH --exclude=sh02-06n01,sh02-06n02
+export PYTHONPATH=""
+
+source ~/miniconda3/etc/profile.d/conda.sh 
+conda activate py3-env
+
+python get_individual_results.py --job plot_ssrts
+python get_individual_results.py --job plot_inhib_func
+python get_individual_results.py --job calc_ssrts
+echo " "
+echo " Parameteric Job Complete"
+echo " "
