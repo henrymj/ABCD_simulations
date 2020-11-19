@@ -3,7 +3,7 @@
 #SBATCH --output=.out/results_%j.out
 #SBATCH --error=.err/results_%j.err
 #SBATCH --time=2:00:00
-#SBATCH --mail-type=ALL
+#SBATCH --mail-type=END
 #SBATCH --mail-user=henrymj@stanford.edu
 #SBATCH --cpus-per-task=16
 #SBATCH --ntasks-per-node=1
