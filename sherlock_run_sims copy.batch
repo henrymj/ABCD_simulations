@@ -1,0 +1,20 @@
+#!/bin/bash
+#SBATCH --job-name=sims
+#SBATCH --output=.out/sims_%j.out
+#SBATCH --error=.err/sims_%j.err
+#SBATCH --time=3:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-user=henrymj@stanford.edu
+#SBATCH -N=0
+#SBATCH -n=0
+#SBATCH -p normal
+# Job Submission
+#-----------
+export PYTHONPATH=""
+
+source ~/miniconda3/etc/profile.d/conda.sh 
+conda activate py3-env
+
+
+
+
