@@ -5,8 +5,8 @@
 #SBATCH --time=3:00:00
 #SBATCH --mail-type=END
 #SBATCH --mail-user=henrymj@stanford.edu
-#SBATCH -N=5 # number of nodes requested - set to ceil(n rows in command script / 36)
-#SBATCH -n=172 # total number of mpi tasks requested - set to n rows in command script
+#SBATCH -N 5 # number of nodes requested - set to ceil(n rows in command script / 36)
+#SBATCH -n 172 # total number of mpi tasks requested - set to n rows in command script
 #SBATCH -p normal
 # Job Submission
 #-----------
