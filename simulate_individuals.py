@@ -60,16 +60,25 @@ if __name__ == '__main__':
     }
 
     # SIMULATE INDIVIDUALS
-
+    issue_subs = []
     for sub in args.subjects:
-        SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
-        params['SSDs'] = SSDs
-        params['p_guess_stop'] = list(p_guess_df[SSDs].values.astype(float)[0])
+        try:
+            SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
+            params['SSDs'] = SSDs
+            params['p_guess_stop'] = list(p_guess_df[SSDs].values.astype(float)[0])
 
-        params['mu_go'] = mus_dict[sub]['go']
-        params['mu_stop'] = mus_dict[sub]['stop']
+            params['mu_go'] = mus_dict[sub]['go']
+            params['mu_stop'] = mus_dict[sub]['stop']
 
-        for sim_key in simulator_dict:
-            data = simulator_dict[sim_key].simulate(params)
-            data['simulation'] = sim_key
-            data.to_csv('%s/%s_%s.csv' % (args.out_dir, sim_key, str(sub)))
+            for sim_key in simulator_dict:
+                data = simulator_dict[sim_key].simulate(params)
+                data['simulation'] = sim_key
+                data.to_csv('%s/%s_%s.csv' % (args.out_dir, sim_key, str(sub)))
+        except KeyError as err:
+            print("KeyError error for sub {0}: {1}".format(sub, err))
+            issue_subs.append(sub)
+            continue
+if len(issue_subs > 0):
+    print('issue subs: ', issue_subs)
+else:
+    print('no problematic subs run here!')

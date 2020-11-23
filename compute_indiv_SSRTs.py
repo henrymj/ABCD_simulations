@@ -49,30 +49,35 @@ if __name__ == '__main__':
     sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
     # CALCULATE SSRT
+    issue_subs = []
     for sub in args.subjects:
-        # set up sub specific graded_mu_go RTs for SSDs
         try:
             params = {
                 'mu_go': mus_dict[sub]['go'],
                 'mu_stop': mus_dict[sub]['stop']
             }
+            sub_SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
+            graded_go_dict = {}
+            for SSD in sub_SSDs:
+                graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
+                    args.n_graded_go_trials,
+                    SSD,
+                    sub_params=params)
+
+            for data_file in glob(path.join(args.sim_dir, '*%s*.csv' % sub)):
+                sim_type = path.basename(
+                    data_file
+                    ).replace('.csv', '')
+                out_df = generate_out_df(pd.read_csv(data_file),
+                                        SSD_guess_dict,
+                                        graded_go_dict,
+                                        sample_exgauss)
+                out_df.to_csv(path.join(args.out_dir, '%s.csv' % sim_type))
         except KeyError as err:
             print("KeyError error for sub {0}: {1}".format(sub, err))
+            issue_subs.append(sub)
             continue
-        sub_SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
-        graded_go_dict = {}
-        for SSD in sub_SSDs:
-            graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
-                args.n_graded_go_trials,
-                SSD,
-                sub_params=params)
-
-        for data_file in glob(path.join(args.sim_dir, '*%s*.csv' % sub)):
-            sim_type = path.basename(
-                data_file
-                ).replace('.csv', '')
-            out_df = generate_out_df(pd.read_csv(data_file),
-                                     SSD_guess_dict,
-                                     graded_go_dict,
-                                     sample_exgauss)
-            out_df.to_csv(path.join(args.out_dir, '%s.csv' % sim_type))
+if len(issue_subs > 0):
+    print('issue subs: ', issue_subs)
+else:
+    print('no problematic subs run here!')
