@@ -2,7 +2,11 @@
 
 ## Overview:
 
-Coming soon.
+The goal of these simulations was to investigate the effect that different generating mechanisms could have on individual difference in the ABCD dataset, and stop signal data at large. The following is an overview of the process.
+3 different generating mechanisms are proposed. First, the standard indepenent race model. Second, a go process that is modulated by SSD (because the go stimulus disappears with the stop signal onset) such that shorter SSDs produce a weaker go drive. Third, go processes are mixed with guess processes, which draw from a faster distribution (this must be the case when SSD=0 as no go signal is presented and choice accuracy on stop failures at this SSD is at chance).
+From these mechanisms, each individual in the ABCD dataset was simulated as follows. First, an average accuracy was gotten for each SSD, and this was converted into a probability of guessing at that SSD (this is the only piece of the simulations not individually fit). Second, SSRT was computed for each individual, and a go drive (mu_go) and stop drive (mu_stop) were derived from their average go RT and their SSRT, respectively, and the distribution of seen SSDs was computed. Following this, 2000 trials per seen SSD and 2000 go trials were simulated per individual. From this we are able to compute the SSRT per seen SSD per individual.
+SSRTs per seen individual were computed in 3 different ways. First, following the regular assumption of independence. Second, assuming there was a mix of guesses which varied by SSD. Third, assuming that the go process itself varied by SSD. This produced an SSRT estimate per seen SSD per individual from each of the 3 (generating mechanisms) x 3 (SSRT assumptions) combinations. These SSRTs were used in (non-corrected) linear models to produce graphs examining SSRT by SSD.
+Expected SSRTs were combuted by summing the SSD-specific-SSRTs, weighted by the frequency a given SSD was seen; creating 9 SSRTs per participant. These SSRTs were then rank correlated.
 
 ## Running on all ABCD individuals (new simulations):
 
