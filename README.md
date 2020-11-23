@@ -8,12 +8,13 @@ Coming soon.
 
 0. The most important files are: `simulate_individuals.py`, `compute_indiv_SSRTs.py`, `get_individual_results.py`, and `utils.py`.
 
-1. `preprocess_ABCD_get_metrics.ipynb` drops participants affected by issue 3 and adds a choice accuracy column as preprocessing. It then computes a) SSRT per participant in order to get mu_go and mu_stop from their mean RT and SSRT, b) the SSD distributions for each participant, c) the accuracy and subsequent P(guess) for each SSD, and d) the inhibition function of the dataset. Each of these is saved to abcd_data/, but this is hidden from github. Following this, it generates `run_sims.sh` and edits `launch_sim_cmds.slurm` for running n jobs in parallel on TACC. It now also makes `sherlock_run_sims.batch` in an attempt to run this these same jobs in parallel on Sherlock. 
+1. `preprocess_ABCD_get_metrics.ipynb` drops participants affected by issue 3 and adds a choice accuracy column as preprocessing. It then computes a) SSRT per participant in order to get mu_go and mu_stop from their mean RT and SSRT, b) the SSD distributions for each participant, c) the accuracy and subsequent P(guess) for each SSD, and d) the inhibition function of the dataset. Each of these is saved to abcd_data/, but this is hidden from github.
+Following this, it generates `run_sims.sh` and edits `launch_sim_cmds.slurm` for running n jobs in parallel on TACC. It now also makes `sherlock_run_sims.batch` in an attempt to run this these same jobs in parallel on Sherlock. 
   
 2. run `sbatch launch_sim_cmds.slurm` or `sbatch sherlock_run_sims.batch` depending on your HPC. This will run `simulate_individuals.py`. 
 - After the simulations "finish", run `python generate_remaining_sim_cmds.py` to look for subs with all 3 simulation files saved and updates `run_sims.sh` to simulate whichever subs didn't complete.
 
-3. run `generate_SSRT_cmds.py` to compare simulated subs to subs with ssrt files and update `run_SSRTs.sh` with a list of subjects in need of ssrt files. run `launch_SSRT_cmds.slurm` which will read `run_SSRTs.sh` and run `compute_indiv_SSRTs.py`, computing SSRTs and getting related metrics per SSD per simulation x SSRT type. 
+3. run `generate_SSRT_cmds.py` to compare simulated subs to subs with ssrt files and update `run_SSRTs.sh` with a list of subjects in need of ssrt files. run `launch_SSRT_cmds.slurm` which will read `run_SSRTs.sh` and run `compute_indiv_SSRTs.py`, computing SSRTs and getting related metrics per SSD per simulation type x SSRT assumption. 
 - Rerunning `generate_SSRT_cmds.py` will update `run_SSRTs.sh` to get SSRT for any subjects which didn't complete.
 
 4. run `launch_run_results.slurm` or `sherlock_run_results.batch` to run `get_individual_results.py`. This reads in the individual ssrt files generated in step 3 and creates the figures along with the expected SSRT for each simulation type x SSRT assumption (9 expected SSRTs) per subject.
