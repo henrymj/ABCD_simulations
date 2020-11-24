@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --job-name=simrt
+#SBATCH --output=.out/simrt_%j.out
+#SBATCH --error=.err/simrt_%j.err
+#SBATCH --time=6:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-user=henrymj@stanford.edu
+#SBATCH --cpus-per-task=16
+#SBATCH --ntasks-per-node=1
+#SBATCH -p russpold,hns
+#SBATCH --exclude=sh02-06n01,sh02-06n02
+export PYTHONPATH=""
+
+source ~/miniconda3/etc/profile.d/conda.sh 
+conda activate py3-env
+
+# python get_individual_results.py --job plot_ssrts
+# python get_individual_results.py --job plot_inhib_func
+python python get_sim_RT_stats.py 
+
+# echo " "
+# echo " Parameteric Job Complete"
+# echo " "
