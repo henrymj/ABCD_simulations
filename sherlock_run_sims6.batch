@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #SBATCH --job-name=sims
 #SBATCH --output=.out/sims6.out
