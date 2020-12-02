@@ -23,15 +23,25 @@ class Accumulator:
             noise_sd (float): noise standard deviation
             starting_point (int): starting point for accumulation (nondecision time for go, SSD for stop), in millseconds
             max_time (int): maximum time point (in milliseconds)
+            min_accumulator_value(float): minimum value that accumulator can take.  set to None for unbounded
         """
 
         accum = np.zeros(self.max_time)
         # for period after start, add noise to mu_go
-        noise = np.random.randn(self.max_time) * self.noise_sd
-        drift = np.ones(self.max_time) * self.mu
-        # gave up on a vectorized version for now
-        for i in range(self.starting_point, self.max_time):
-            accum[i] = np.max([self.min_accumulator_value, accum[i - 1] + drift[i] + noise[i]])
+        accumulation_period = self.max_time - self.starting_point
+        noise = np.random.randn(accumulation_period) * self.noise_sd
+        drift = np.ones(accumulation_period) * self.mu
+        accum[self.starting_point:] = np.cumsum(noise + drift)
+
+        # remove values below minimum
+        # vectorized version developed by @henrymj
+        if self.min_accumulator_value is not None:
+            negative_spots = np.where(accum < self.min_accumulator_value)[0]
+            for neg_idx in negative_spots:
+                # this will be true for the first index, but not necessarily the remaining indices
+                if accum[neg_idx] < 0:  
+                    accum[neg_idx:] += -(accum[neg_idx])
+
         self.accum_ = accum
 
     def threshold_accumulator(self, threshold=None):
