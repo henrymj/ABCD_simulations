@@ -4,7 +4,6 @@ import numpy as np
 
 
 # class to implement accumulator
-# this is a 
 class Accumulator:
     def __init__(self, mu, noise_sd, starting_point, max_time,
                  threshold=None, min_accumulator_value=0):
@@ -20,15 +19,14 @@ class Accumulator:
         """simulate an accumulator process
 
         Args:
-            mu ([type]): drift rate
-            noise_sd ([type]): noise standard deviation
-            starting_point ([type]): starting point for accumulation (nondecision time for go, SSD for stop), in millseconds
-            max_time ([type]): maximum time point (in milliseconds)
+            mu (float): drift rate
+            noise_sd (float): noise standard deviation
+            starting_point (int): starting point for accumulation (nondecision time for go, SSD for stop), in millseconds
+            max_time (int): maximum time point (in milliseconds)
         """
 
         accum = np.zeros(self.max_time)
         # for period after start, add noise to mu_go
-        accumulation_period = self.max_time - self.starting_point
         noise = np.random.randn(self.max_time) * self.noise_sd
         drift = np.ones(self.max_time) * self.mu
         # gave up on a vectorized version for now
@@ -40,8 +38,8 @@ class Accumulator:
         """Compute RT and accuracy from an accumuator trace.
 
         Args:
-            threshold ([type], optional): threshold for accumulator. Defaults to None, in which case self.threshold is used
-        
+            threshold (int, optional): threshold for accumulator. Defaults to None, in which case self.threshold is used
+
         Returns:
             rt (int): response time in milliseconds
         """
