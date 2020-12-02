@@ -45,7 +45,6 @@ class Accumulator:
         
         Returns:
             rt (int): response time in milliseconds
-            correct (bool): accuracy
         """
         if threshold is None:
             threshold = self.threshold
@@ -54,14 +53,13 @@ class Accumulator:
         if self.accum_ is None:
             self.run()
 
-        exceed_threshold_abs = np.where(np.abs(self.accum_) > threshold)
-        if len(exceed_threshold_abs[0]) > 0:
-            self.rt_ = np.min(exceed_threshold_abs[0])
-            self.correct_ = self.accum_[self.rt_] >= threshold
+        exceed_threshold = np.where(self.accum_ > threshold)
+        if len(exceed_threshold[0]) > 0:
+            self.rt_ = np.min(exceed_threshold[0])
         else:
-            self.rt_, self.correct_ = None, None
+            self.rt_ = None
 
-        return(self.rt_, self.correct_)
+        return(self.rt_)
 
 
 if __name__ == '__main__':
