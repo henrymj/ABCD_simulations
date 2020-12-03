@@ -36,6 +36,7 @@ class fixedSSD:
             yield SSDlist[i]
 
 
+
 # main study class
 class StopTaskStudy:
     def __init__(self, SSDgenerator, params=None, **kwargs):
@@ -48,6 +49,7 @@ class StopTaskStudy:
                 'noise_sd': {'go': 2.2, 'stop': 2.2},
                 'threshold': 100,
                 'ntrials': {'go': 10000, 'stop': 2000},
+                'mu_go_grader': 'log'
             }
         else:
             self.params = params
