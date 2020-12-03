@@ -39,7 +39,7 @@ class Accumulator:
             negative_spots = np.where(accum < self.min_accumulator_value)[0]
             for neg_idx in negative_spots:
                 # this will be true for the first index, but not necessarily the remaining indices
-                if accum[neg_idx] < 0:  
+                if accum[neg_idx] < 0:
                     accum[neg_idx:] += -(accum[neg_idx])
 
         self.accum_ = accum
