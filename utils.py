@@ -8,26 +8,22 @@ class SimulateData():
                  variable_mu_stop=False,
                  trigger_failures=False,
                  guesses=False,
-                 mu_go_grader=None):
+                 grade_mu_go=False,
+                 grade_mu_stop=False
+                 ):
         self.model = model
         self.variable_mu_stop = variable_mu_stop
         self.trigger_failures = trigger_failures
         self.guesses = guesses
+        self.grade_mu_go = grade_mu_go
+        self.grade_mu_stop = grade_mu_stop
+
         trial_iterators = {
             'independent_race': self._independent_race_trial,
             'interactive_race': self._interactive_race_trial,
             'blocked_input': self._blocked_input_trial
         }
         self._trial_iter = trial_iterators[model]
-
-        self._mu_go_grader = None
-        if mu_go_grader:
-            mu_go_graders = {
-                'log': self._log_mu_go,
-                'linear': self._linear_mu_go,
-            }
-            assert mu_go_grader in ['log', 'linear']
-            self._mu_go_grader = mu_go_graders[mu_go_grader]
 
     def simulate(self, params=None):
         params = params if params else {}
@@ -258,8 +254,10 @@ class SimulateData():
                               for SSD, p in zip(params['SSDs'],
                                                 p_guess_per_SSD)}
 
-    def _get_mu_stop(self, params):
+    def _get_mu_stop(self, params, SSD):
         mu_stop = params['mu_stop']
+        if self.grade_mu_stop and SSD is not None:
+            mu_stop = self._log_grade_mu(mu_stop, SSD)
         if self.variable_mu_stop:
             mu_stop = mu_stop+np.random.normal(
                 loc=0, scale=params['noise_stop']*.7)
@@ -271,19 +269,19 @@ class SimulateData():
     def _get_mu_go(self, params, SSD):
         # TODO: make more dynamic, pass max_SSD
         mu_go = params['mu_go']
-        if self._mu_go_grader and SSD is not None:
-            mu_go = self._mu_go_grader(mu_go, SSD)
+        if self.grade_mu_go and SSD is not None:
+            mu_go = self._log_grade_mu(mu_go, SSD)
         return mu_go
 
-    def _log_mu_go(self, mu_go, SSD, max_SSD=550):
+    def _log_grade_mu(self, mu_go, SSD, max_SSD=550):
         if SSD > max_SSD:
             SSD = max_SSD
         return self._at_least_0((np.log(SSD/max_SSD)/4+1) * mu_go)
 
-    def _linear_mu_go(self, mu_go, SSD, max_SSD=550):
-        if SSD > max_SSD:
-            SSD = max_SSD
-        return self._at_least_0((SSD/max_SSD) * mu_go)
+    # def _linear_mu_go(self, mu_go, SSD, max_SSD=550):
+    #     if SSD > max_SSD:
+    #         SSD = max_SSD
+    #     return self._at_least_0((SSD/max_SSD) * mu_go)
 
     def _init_params(self, params=None):
         params = params if params else {}
@@ -335,7 +333,7 @@ class SimulateData():
                 'SSD': SSD,
                 'trial_idx': trial_idx,
                 'mu_go': self._get_mu_go(params, SSD),
-                'mu_stop': self._get_mu_stop(params),
+                'mu_stop': self._get_mu_stop(params, SSD),
                 'stop_init_time': stop_init_time,
                 'noise_go': params['noise_go'],
                 'noise_stop': params['noise_stop'],

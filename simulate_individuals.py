@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     indiv_ssd_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir,
                                   index_col=0)
-    with open('%s/individual_mus.json' % args.abcd_dir) as json_file:
+    with open('%s/assigned_mus.json' % args.abcd_dir) as json_file:
         mus_dict = json.load(json_file)
 
     # SETUP SIMULATORS
@@ -44,13 +44,15 @@ if __name__ == '__main__':
     simulator_dict = {
         'standard': SimulateData(),
         'guesses': SimulateData(guesses=True),
-        'graded_mu_go_log': SimulateData(mu_go_grader='log'),
+        'graded_go': SimulateData(grade_mu_go=True),
+        'graded_both': SimulateData(grade_mu_go=True, grade_mu_stop=True),
     }
 
     group_data_dict = {
         'standard': pd.DataFrame(),
         'guesses': pd.DataFrame(),
-        'graded_mu_go_log': pd.DataFrame(),
+        'graded_go': pd.DataFrame(),
+        'graded_both': pd.DataFrame()
     }
 
     params = {
