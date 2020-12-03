@@ -48,13 +48,6 @@ if __name__ == '__main__':
         'graded_both': SimulateData(grade_mu_go=True, grade_mu_stop=True),
     }
 
-    group_data_dict = {
-        'standard': pd.DataFrame(),
-        'guesses': pd.DataFrame(),
-        'graded_go': pd.DataFrame(),
-        'graded_both': pd.DataFrame()
-    }
-
     params = {
         'n_trials_stop': args.n_trials,
         'n_trials_go': args.n_trials,
@@ -80,7 +73,7 @@ if __name__ == '__main__':
             print("KeyError error for sub {0}: {1}".format(sub, err))
             issue_subs.append(sub)
             continue
-if len(issue_subs > 0):
+if len(issue_subs) > 0:
     print('issue subs: ', issue_subs)
 else:
     print('no problematic subs run here!')
