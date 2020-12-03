@@ -8,6 +8,12 @@ def replace_none(x, replacement=np.inf):
     return(x if x is not None else replacement)
 
 
+# hand-tuned grading function for mu_go
+def log_mu_go(mu_go, SSD, max_SSD=550):
+    SSD = min(SSD, max_SSD)
+    return(0 if SSD == 0 else max(0, np.log(SSD / max_SSD) / 4 + 1 * mu_go))
+
+
 class Trial:
     def __init__(self, SSD=None, params=None, verbose=False, **kwargs):
         self.SSD = SSD
@@ -20,7 +26,8 @@ class Trial:
                 'mu_delta_incorrect': 0.9,
                 'nondecision': {'go': 50, 'stop': 50},
                 'noise_sd': {'go': 3.2, 'stop': 3.2},
-                'threshold': 100
+                'threshold': 100,
+                'mu_go_grader': None
             }
         else:
             self.params = params
@@ -42,8 +49,14 @@ class Trial:
         if verbose:
             print(trial_params)
 
+        # apply mu_go grader on stop trials
+        if self.trial_type == 'stop' and trial_params['mu_go_grader'] == 'log':
+            mu_go = log_mu_go(trial_params['mu']['go'], self.SSD)
+        else:
+            mu_go = trial_params['mu']['go']
+
         accumulator = Accumulator(
-            mu=trial_params['mu']['go'],
+            mu=mu_go,
             noise_sd=trial_params['noise_sd']['go'],
             starting_point=trial_params['nondecision']['go'],
             max_time=trial_params['max_time'])
