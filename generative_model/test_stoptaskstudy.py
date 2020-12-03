@@ -11,5 +11,5 @@ def test_fixedssd():
 
 def test_run_fixedssd():
     ssd = fixedSSD([0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500])
-    study = StopTaskStudy(ssd)
+    study = StopTaskStudy(ssd, '/dev/null')
     trialdata = study.run()
