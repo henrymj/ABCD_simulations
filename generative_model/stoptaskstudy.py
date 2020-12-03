@@ -28,7 +28,7 @@ class fixedSSD:
         Yields:
             [type]: [description]
         """
-        num_repeats = np.ceil(n_stop_trials/len(self.SSDs))
+        num_repeats = np.ceil(n_stop_trials / len(self.SSDs))
         SSDlist = np.repeat(self.SSDs, num_repeats)
         np.random.shuffle(SSDlist)
         SSDlist = SSDlist[:n_stop_trials]
@@ -41,10 +41,11 @@ class StopTaskStudy:
     def __init__(self, SSDgenerator, params=None, **kwargs):
         if params is None:
             self.params = {
-                'mu': {'go': 0.2, 'stop': 0.4},
+                'mu': {'go': 0.3, 'stop': 0.5},
                 'max_time': 1000,
+                'mu_delta_incorrect': 0.2,
                 'nondecision': {'go': 50, 'stop': 50},
-                'noise_sd': {'go': 3.2, 'stop': 3.2},
+                'noise_sd': {'go': 2.2, 'stop': 2.2},
                 'threshold': 100,
                 'ntrials': {'go': 10000, 'stop': 2000},
             }
@@ -61,34 +62,36 @@ class StopTaskStudy:
 
     def run(self):
 
-        Trialdata = namedtuple('Trialdata','trialtype, SSD, rt, resp')
+        Trialdata = namedtuple('Trialdata', 'trialtype, SSD, rt, resp, correct')
         trialdata = []
 
         # generate stop trials
         for i, SSD in enumerate(self.SSDgenerator.generate(self.params['ntrials']['stop'])):
             trial = Trial(SSD, self.params)
-            rt = trial.simulate()
+            rt, correct = trial.simulate()
             trialdata.append(Trialdata(
                 trialtype='stop',
                 SSD=SSD,
                 rt=rt,
-                resp=(rt is not None)))
+                resp=(rt is not None),
+                correct=correct))
 
         # generate go trials
         SSD = -np.inf
-        for i in range(self.params['ntrials']['go']):
+        for _ in range(self.params['ntrials']['go']):
             # first simulate correct response racer
             trial = Trial(None, self.params)
-            rt = trial.simulate()
+            rt, correct = trial.simulate()
 
             trialdata.append(Trialdata(
                 trialtype='go',
                 SSD=SSD,
                 rt=rt,
-                resp=(rt is not None)))
+                resp=(rt is not None),
+                correct=correct))
         self.trialdata_ = pd.DataFrame(data=trialdata)
         return(self.trialdata_)
-    
+
     def get_stopsignal_metrics(self):
         trialdata = self.trialdata_
         # clean up data for stopsignal metrics analysis
@@ -98,23 +101,23 @@ class StopTaskStudy:
         trialdata['block'] = 1
         trialdata['condition'] = trialdata['trialtype']
         trialdata['goRT'] = trialdata['rt']
-        trialdata.loc[trialdata.trialtype=='stop', 'goRT'] = None
+        trialdata.loc[trialdata.trialtype == 'stop', 'goRT'] = None
         trialdata['stopRT'] = trialdata['rt']
-        trialdata.loc[trialdata.trialtype=='go', 'stopRT'] = None
+        trialdata.loc[trialdata.trialtype == 'go', 'stopRT'] = None
 
         # compute metrics
         ssrt_model = SSRTmodel(model='all')
         self.metrics_ = ssrt_model.fit_transform(trialdata)
         return(self.metrics_)
 
+
 if __name__ == '__main__':
     ssd = fixedSSD(np.arange(0, 550, 50))
     study = StopTaskStudy(ssd)
     trialdata = study.run()
 
-    # summarize data - go trials are labeled with SSD of -inf so that 
+    # summarize data - go trials are labeled with SSD of -inf so that
     # they get included in the summary
     print(trialdata.groupby('SSD').mean())
-
+    print('go_accuracy', trialdata.query('trialtype=="go"').correct.mean())
     print(study.get_stopsignal_metrics())
-
