@@ -1,6 +1,11 @@
 # class for a trial
 
+import numpy as np
 from accumulator import Accumulator
+
+
+def replace_none(x, replacement=np.inf):
+    return(x if x is not None else replacement)
 
 
 class Trial:
@@ -8,9 +13,11 @@ class Trial:
         self.SSD = SSD
         if params is None:
             # use dummy settings for testing
+            # NOTE: mu_delta_incorrect is a multiplier on mu_go
             self.params = {
                 'mu': {'go': 0.5, 'stop': 0.5},
                 'max_time': 1000,
+                'mu_delta_incorrect': 0.9,
                 'nondecision': {'go': 50, 'stop': 50},
                 'noise_sd': {'go': 3.2, 'stop': 3.2},
                 'threshold': 100
@@ -40,7 +47,24 @@ class Trial:
             noise_sd=trial_params['noise_sd']['go'],
             starting_point=trial_params['nondecision']['go'],
             max_time=trial_params['max_time'])
-        self.rt_ = accumulator.threshold_accumulator(threshold=trial_params['threshold'])
+        correct_rt = accumulator.threshold_accumulator(threshold=trial_params['threshold'])
+
+        accumulator = Accumulator(
+            mu=trial_params['mu']['go'] * trial_params['mu_delta_incorrect'],
+            noise_sd=trial_params['noise_sd']['go'],
+            starting_point=trial_params['nondecision']['go'],
+            max_time=trial_params['max_time'])
+        incorrect_rt = accumulator.threshold_accumulator(threshold=trial_params['threshold'])
+
+        # use replace_none to deal with cases where accumulator doesn't reach threshold
+        if correct_rt is None and incorrect_rt is None:
+            self.rt_ = None
+            self.correct_ = None
+        else:
+            self.rt_ = np.min([replace_none(correct_rt),
+                               replace_none(incorrect_rt)])
+
+            self.correct_ = replace_none(correct_rt) < replace_none(incorrect_rt)
 
         if self.trial_type == 'stop':
             accumulator = Accumulator(
@@ -50,13 +74,13 @@ class Trial:
                 max_time=trial_params['max_time'])
             stop_rt = accumulator.threshold_accumulator(threshold=trial_params['threshold'])
             # if stop process wins, set RT to None to reflect successful stop
-            if self.rt_ is not None and stop_rt is not None:
-                if stop_rt < self.rt_:
-                    self.rt_ = None
+            if self.rt_ is not None and stop_rt is not None and stop_rt < self.rt_:
+                self.rt_ = None
+                self.correct_ = None
             if verbose:
                 print()
 
-        return(self.rt_)
+        return(self.rt_, self.correct_)
 
 
 if __name__ == '__main__':
