@@ -11,6 +11,7 @@ from stopsignalmetrics import StopData, SSRTmodel, PostStopSlow, Violations, Sto
 
 Trialdata = namedtuple('Trialdata', 'trialtype, SSD, rt, resp, correct')
 
+
 # SSD generators
 class fixedSSD:
     def __init__(self, SSDs, **kwargs):
@@ -62,19 +63,20 @@ class trackingSSD:
         """
         if SSD is None:
             SSD = self.starting_ssd
-        elif success == True:
+        elif success:
             SSD = SSD + self.step_size
         else:
             SSD = SSD - self.step_size
 
         if SSD < self.min_ssd:
-            self.SSD = min_ssd
+            self.SSD = self.min_ssd
         elif SSD > self.max_ssd:
-            self.SSD = max_ssd
+            self.SSD = self.max_ssd
         else:
             self.SSD = SSD
 
         return(self.SSD)
+
 
 # main study class
 class StopTaskStudy:
@@ -123,7 +125,7 @@ class StopTaskStudy:
         trialdata = []
         SSD = None
         stop_success = None
-        for i in range(self.params['ntrials']['stop']):
+        for _ in range(self.params['ntrials']['stop']):
             SSD = self.SSDgenerator.update(SSD, stop_success)
             trial = Trial(SSD, self.params)
             rt, correct = trial.simulate()
@@ -144,8 +146,6 @@ class StopTaskStudy:
             trialdata = self._generate_stop_trials_tracking()
         else:
             raise Exception(f'SSD generator class {self.SSDgenerator.__class__.__name__} not yet implemented')
- 
-
 
         # generate go trials
         SSD = -np.inf
@@ -170,7 +170,6 @@ class StopTaskStudy:
         self.trialdata_.to_csv(f'{outfile_stem}.csv')
         with open(f'{outfile_stem}.json', 'w') as f:
             json.dump(self.params, f)
-        
 
     def get_stopsignal_metrics(self):
         trialdata = self.trialdata_
@@ -198,13 +197,13 @@ def get_args():
     parser.add_argument('--max_ssd', help='maximum SSD value', default=550)
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
+    parser.add_argument('--tracking', help='use tracking algorithm', default=False)
     parser.add_argument('--n_subjects', nargs='+',
                         help='number of subjects to simulate', default=1)
     parser.add_argument('--out_dir',
                         default='./simulated_data/pseudosubjects',
                         help='location to save simulated data')
-    args = parser.parse_args()
-    return(args)
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
@@ -218,8 +217,11 @@ if __name__ == '__main__':
     print(params)
     if args.random_seed is not None:
         np.random.seed(args.random_seed)
-    #ssd = fixedSSD(np.arange(args.min_ssd, args.max_ssd + args.ssd_step, args.ssd_step))
-    ssd = trackingSSD()
+
+    if args.tracking:
+        ssd = trackingSSD()
+    else:
+        ssd = fixedSSD(np.arange(args.min_ssd, args.max_ssd + args.ssd_step, args.ssd_step))
     study = StopTaskStudy(ssd, args.out_dir)
 
     # save some extra params for output to json
