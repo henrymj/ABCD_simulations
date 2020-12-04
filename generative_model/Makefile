@@ -1,3 +1,5 @@
+clean:
+	rm simulated_data/pseudosubjects/*
 test:
 	python -m pytest
 
