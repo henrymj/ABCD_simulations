@@ -101,6 +101,7 @@ class StopTaskStudy:
             os.makedirs(outdir)
         self.SSDgenerator = SSDgenerator
         self.trialdata_ = None
+        self.metrics_ = None
         # create random subject code
         if 'subcode' not in self.params:
             self.params['subcode'] = np.random.randint(10e12)
@@ -174,21 +175,35 @@ class StopTaskStudy:
     def get_stopsignal_metrics(self):
         trialdata = self.trialdata_
         # clean up data for stopsignal metrics analysis
-        trialdata['subcode'] = self.params['subcode']
-        trialdata['resp'] = trialdata.resp.astype(int)
+        trialdata.loc[trialdata.correct.isnull(), 'correct'] = False
         trialdata['correct_response'] = 1
-        trialdata['block'] = 1
-        trialdata['condition'] = trialdata['trialtype']
-        trialdata['goRT'] = trialdata['rt']
-        trialdata.loc[trialdata.trialtype == 'stop', 'goRT'] = None
-        trialdata['stopRT'] = trialdata['rt']
-        trialdata.loc[trialdata.trialtype == 'go', 'stopRT'] = None
-
+        var_dict = {'columns': {'ID': 'subcode',
+        'block': 'block',
+        'condition': 'trialtype',
+        'SSD': 'SSD',
+        'goRT': 'rt',
+        'stopRT': 'rt',
+        'response': 'resp',
+        'correct_response': 'correct_response',
+        'choice_accuracy': 'correct'},
+        'key_codes': {'go': 'go',
+        'stop': 'stop',
+        'correct': True,
+        'incorrect': False,
+        'noResponse': None}}
+        stopdata = StopData(var_dict, compute_acc_col=False)
+        trialdata_proc = stopdata.fit_transform(trialdata)
         # compute metrics
         ssrt_model = SSRTmodel(model='all')
-        self.metrics_ = ssrt_model.fit_transform(trialdata)
+        self.metrics_ = ssrt_model.fit_transform(trialdata_proc)
         return(self.metrics_)
 
+    def save_metrics(self):
+        if self.metrics_ is None:
+            raise Exception('metrics not yet computed')
+        outfile_stem = os.path.join(self.outdir, f'{self.params["subcode"]}')
+        with open(f'{outfile_stem}_metrics.json', 'w') as f:
+            json.dump(self.metrics_, f)
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulator')
@@ -223,14 +238,15 @@ if __name__ == '__main__':
         ssd = trackingSSD()
     else:
         ssd = fixedSSD(np.arange(args.min_ssd, args.max_ssd + args.ssd_step, args.ssd_step))
-    study = StopTaskStudy(ssd, args.out_dir)
-
-    # save some extra params for output to json
-    study.params['args'] = args.__dict__
-    study.params['pwd'] = os.getcwd()
 
     for i in range(args.n_subjects):
         print(f'running subject {i + 1}')
+        study = StopTaskStudy(ssd, args.out_dir)
+
+        # save some extra params for output to json
+        study.params['args'] = args.__dict__
+        study.params['pwd'] = os.getcwd()
+    
         trialdata = study.run()
         study.save_trialdata()
 
@@ -239,3 +255,4 @@ if __name__ == '__main__':
         print(trialdata.groupby('SSD').mean())
         print('go_accuracy', trialdata.query('trialtype=="go"').correct.mean())
         print(study.get_stopsignal_metrics())
+        study.save_metrics()
