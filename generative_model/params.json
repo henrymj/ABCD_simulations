@@ -15,8 +15,9 @@
     },
     "threshold": 100,
     "ntrials": {
-        "go": 10000,
-        "stop": 2000
+        "go": 5000,
+        "stop": 1000
     },
-    "mu_go_grader": "log"
+    "mu_go_grader": null
 }
+
