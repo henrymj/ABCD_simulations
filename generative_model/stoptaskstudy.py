@@ -198,7 +198,7 @@ def get_args():
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
     parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
-    parser.add_argument('--n_subjects', nargs='+',
+    parser.add_argument('--n_subjects', type=int,
                         help='number of subjects to simulate', default=1)
     parser.add_argument('--out_dir',
                         default='./simulated_data/pseudosubjects',
@@ -215,6 +215,7 @@ if __name__ == '__main__':
     else:
         params = None
     print(params)
+
     if args.random_seed is not None:
         np.random.seed(args.random_seed)
 
@@ -228,11 +229,13 @@ if __name__ == '__main__':
     study.params['args'] = args.__dict__
     study.params['pwd'] = os.getcwd()
 
-    trialdata = study.run()
-    study.save_trialdata()
+    for i in range(args.n_subjects):
+        print(f'running subject {i + 1}')
+        trialdata = study.run()
+        study.save_trialdata()
 
-    # summarize data - go trials are labeled with SSD of -inf so that
-    # they get included in the summary
-    print(trialdata.groupby('SSD').mean())
-    print('go_accuracy', trialdata.query('trialtype=="go"').correct.mean())
-    print(study.get_stopsignal_metrics())
+        # summarize data - go trials are labeled with SSD of -inf so that
+        # they get included in the summary
+        print(trialdata.groupby('SSD').mean())
+        print('go_accuracy', trialdata.query('trialtype=="go"').correct.mean())
+        print(study.get_stopsignal_metrics())
