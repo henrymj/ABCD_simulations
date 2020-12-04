@@ -197,7 +197,7 @@ def get_args():
     parser.add_argument('--max_ssd', help='maximum SSD value', default=550)
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
-    parser.add_argument('--tracking', help='use tracking algorithm', default=False)
+    parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
     parser.add_argument('--n_subjects', nargs='+',
                         help='number of subjects to simulate', default=1)
     parser.add_argument('--out_dir',
