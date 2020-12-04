@@ -3,10 +3,7 @@ import argparse
 import json
 from os import path
 from glob import glob
-
-
-from simulate import generate_exgauss_sampler_from_fit
-
+from simulate_indviduals import generate_exgauss_sampler_from_fit
 from compute_SSRTs import generate_out_df,\
     simulate_graded_RTs_and_sort
 
