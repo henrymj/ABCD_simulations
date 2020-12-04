@@ -83,7 +83,7 @@ if __name__ == '__main__':
             if end_idx > len(remaining_subs):
                 end_idx = len(remaining_subs)
             substr = ' '.join(remaining_subs[start_idx:end_idx])
-            f.write(f'python compute_indiv_SSRTs.py --subjects {substr}\n')
+            f.write(f'python ../../scripts/compute_indiv_SSRTs.py --subjects {substr}\n')
             nlines += 1
 
     N_line_str = '#SBATCH -N %d # number of nodes requested - set to ceil(n rows in command script / 36)\n' % int(np.ceil(nlines/njobs_per_node))
@@ -133,7 +133,7 @@ if __name__ == '__main__':
         if end_idx > len(remaining_subs):
             end_idx = len(remaining_subs)
         substr = ' '.join(remaining_subs[start_idx:end_idx])
-        file_str += (f'eval "python compute_indiv_SSRTs.py --subjects {substr}" &\n')
+        file_str += (f'eval "python ../../scripts/compute_indiv_SSRTs.py --subjects {substr}" &\n')
         nlines += 1
         if nlines == 24:
             with open(sher_sim_file % batch_counter, 'w') as f:

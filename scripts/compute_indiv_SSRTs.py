@@ -19,10 +19,10 @@ def get_args():
     parser.add_argument('--abcd_dir', default='./abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--sim_dir',
-                        default='./simulated_data/individual_data',
+                        default='../simulated_data/individual_data',
                         help='location to save simulated data')
     parser.add_argument('--out_dir',
-                        default='./ssrt_metrics/individual_metrics',
+                        default='../ssrt_metrics/individual_metrics',
                         help='location to save simulated data')
     args = parser.parse_args()
     return(args)
@@ -69,9 +69,9 @@ if __name__ == '__main__':
                     data_file
                     ).replace('.csv', '')
                 out_df = generate_out_df(pd.read_csv(data_file),
-                                        SSD_guess_dict,
-                                        graded_go_dict,
-                                        sample_exgauss)
+                                         SSD_guess_dict,
+                                         graded_go_dict,
+                                         sample_exgauss)
                 out_df.to_csv(path.join(args.out_dir, '%s.csv' % sim_type))
         except KeyError as err:
             print("KeyError error for sub {0}: {1}".format(sub, err))
