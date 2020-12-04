@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 import numpy as np
-from trial import Trial
+from trial import Trial, init_default_params, fix_params
 from collections import namedtuple
 import pandas as pd
 from stopsignalmetrics import StopData, SSRTmodel, PostStopSlow, Violations, StopSummary
@@ -82,21 +82,15 @@ class trackingSSD:
 class StopTaskStudy:
     def __init__(self, SSDgenerator, outdir, params=None, **kwargs):
         if params is None:
-            self.params = {
-                'mu': {'go': 0.3, 'stop': 0.5},
-                'max_time': 1000,
-                'mu_delta_incorrect': 0.2,
-                'nondecision': {'go': 50, 'stop': 50},
-                'noise_sd': {'go': 2.2, 'stop': 2.2},
-                'threshold': 100,
-                'ntrials': {'go': 10000, 'stop': 2000},
-                'mu_go_grader': 'log'
-            }
+            self.params = init_default_params()
         else:
             self.params = params
         for key, value in kwargs.items():
             self.params[key] = value
+
+        self.params = fix_params(self.params)
         self.outdir = outdir
+
         if not os.path.exists(outdir):
             os.makedirs(outdir)
         self.SSDgenerator = SSDgenerator
@@ -141,6 +135,7 @@ class StopTaskStudy:
 
     def run(self):
 
+        # generate stop trials depending on the generator mechanism
         if self.SSDgenerator.__class__.__name__ == 'fixedSSD':
             trialdata = self._generate_stop_trials_fixed()
         elif self.SSDgenerator.__class__.__name__ == 'trackingSSD':
@@ -177,20 +172,21 @@ class StopTaskStudy:
         # clean up data for stopsignal metrics analysis
         trialdata.loc[trialdata.correct.isnull(), 'correct'] = False
         trialdata['correct_response'] = 1
-        var_dict = {'columns': {'ID': 'subcode',
-        'block': 'block',
-        'condition': 'trialtype',
-        'SSD': 'SSD',
-        'goRT': 'rt',
-        'stopRT': 'rt',
-        'response': 'resp',
-        'correct_response': 'correct_response',
-        'choice_accuracy': 'correct'},
-        'key_codes': {'go': 'go',
-        'stop': 'stop',
-        'correct': True,
-        'incorrect': False,
-        'noResponse': None}}
+        var_dict = {
+            'columns': {'ID': 'subcode',
+                        'block': 'block',
+                        'condition': 'trialtype',
+                        'SSD': 'SSD',
+                        'goRT': 'rt',
+                        'stopRT': 'rt',
+                        'response': 'resp',
+                        'correct_response': 'correct_response',
+                        'choice_accuracy': 'correct'},
+            'key_codes': {'go': 'go',
+                          'stop': 'stop',
+                          'correct': True,
+                          'incorrect': False,
+                          'noResponse': None}}
         stopdata = StopData(var_dict, compute_acc_col=False)
         trialdata_proc = stopdata.fit_transform(trialdata)
         # compute metrics
@@ -205,6 +201,7 @@ class StopTaskStudy:
         with open(f'{outfile_stem}_metrics.json', 'w') as f:
             json.dump(self.metrics_, f)
 
+
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulator')
     parser.add_argument('--paramfile', help='json file containing parameters')
@@ -212,6 +209,9 @@ def get_args():
     parser.add_argument('--max_ssd', help='maximum SSD value', default=550)
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
+    parser.add_argument('--p_guess_file', help='file with p_guess per ssd, should contain columns labeled SSD and p_guess')
+    parser.add_argument('--guess_param_file', default='exgauss_params.json',
+                        help='file with exgauss params for guesses')
     parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
     parser.add_argument('--n_subjects', type=int,
                         help='number of subjects to simulate', default=1)
@@ -231,6 +231,10 @@ if __name__ == '__main__':
         params = None
     print(params)
 
+    if args.p_guess_file is not None:
+        p_guess = pd.read_csv(args.p_guess_file, index_col=0)
+        assert 'SSD' in p_guess.columns and 'p_guess' in p_guess.columns
+
     if args.random_seed is not None:
         np.random.seed(args.random_seed)
 
@@ -246,7 +250,7 @@ if __name__ == '__main__':
         # save some extra params for output to json
         study.params['args'] = args.__dict__
         study.params['pwd'] = os.getcwd()
-    
+
         trialdata = study.run()
         study.save_trialdata()
 
