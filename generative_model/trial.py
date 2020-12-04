@@ -1,6 +1,7 @@
 # class for a trial
 
 import numpy as np
+from scipy.stats import exponnorm
 from accumulator import Accumulator
 
 
@@ -25,7 +26,8 @@ def init_default_params():
             'threshold': 100,
             'ntrials': {'go': 10000, 'stop': 2000},
             'mu_go_grader': None,
-            'p_guess': None
+            'p_guess': None,
+            'exgauss_params': None
             })
 
 
@@ -40,6 +42,13 @@ def fix_params(params):
         if k not in params:
             params[k] = None
     return(params)
+
+
+def sample_guess_rt(exgauss_params):
+    return(
+        exponnorm.rvs(exgauss_params['K'],
+                      exgauss_params['loc'],
+                      exgauss_params['scale']))
 
 
 class Trial:
@@ -69,6 +78,21 @@ class Trial:
 
         if verbose:
             print(trial_params)
+
+        # first see if it's a fast guess, and if so then sample an RT and accuracy
+        if trial_params['p_guess'] is not None:
+            if trial_params['exgauss_params'] is None:
+                raise Exception('Exgauss params must be specified if using the guessing model')
+
+            if self.trial_type == 'go':
+                p_fast_guess = trial_params['p_guess']['go']
+            else:
+                p_fast_guess = trial_params['p_guess']['stop'][self.SSD]
+            if np.random.rand() < p_fast_guess:
+                self.rt_ = sample_guess_rt(trial_params['exgauss_params'])
+
+            self.correct_ = np.random.rand() < 0.5  # assume unbiased guessing
+            return(self.rt_, self.correct_)
 
         # apply mu_go grader on stop trials
         if self.trial_type == 'stop' and trial_params['mu_go_grader'] == 'log':
