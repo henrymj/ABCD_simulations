@@ -1,7 +1,7 @@
 # tests for accumulator class
 
 import pytest
-from .accumulator import Accumulator
+from accumulator import Accumulator
 
 @pytest.fixture(scope="session")
 def accumulator():

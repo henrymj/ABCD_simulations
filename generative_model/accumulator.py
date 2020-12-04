@@ -4,7 +4,6 @@ import numpy as np
 
 
 # class to implement accumulator
-# this is a 
 class Accumulator:
     def __init__(self, mu, noise_sd, starting_point, max_time,
                  threshold=None, min_accumulator_value=0):
@@ -20,10 +19,11 @@ class Accumulator:
         """simulate an accumulator process
 
         Args:
-            mu ([type]): drift rate
-            noise_sd ([type]): noise standard deviation
-            starting_point ([type]): starting point for accumulation (nondecision time for go, SSD for stop), in millseconds
-            max_time ([type]): maximum time point (in milliseconds)
+            mu (float): drift rate
+            noise_sd (float): noise standard deviation
+            starting_point (int): starting point for accumulation (nondecision time for go, SSD for stop), in millseconds
+            max_time (int): maximum time point (in milliseconds)
+            min_accumulator_value(float): minimum value that accumulator can take.  set to None for unbounded
         """
 
         accum = np.zeros(self.max_time)
@@ -32,17 +32,24 @@ class Accumulator:
         noise = np.random.randn(accumulation_period) * self.noise_sd
         drift = np.ones(accumulation_period) * self.mu
         accum[self.starting_point:] = np.cumsum(noise + drift)
-        if self.min_accumulator_value:
-            # clip minimum value of accumulator
-            accum = np.clip(accum, self.min_accumulator_value, np.inf)
+
+        # remove values below minimum
+        # vectorized version developed by @henrymj
+        if self.min_accumulator_value is not None:
+            negative_spots = np.where(accum < self.min_accumulator_value)[0]
+            for neg_idx in negative_spots:
+                # this will be true for the first index, but not necessarily the remaining indices
+                if accum[neg_idx] < 0:
+                    accum[neg_idx:] += -(accum[neg_idx])
+
         self.accum_ = accum
 
     def threshold_accumulator(self, threshold=None):
         """Compute RT and accuracy from an accumuator trace.
 
         Args:
-            threshold ([type], optional): threshold for accumulator. Defaults to None, in which case self.threshold is used
-        
+            threshold (int, optional): threshold for accumulator. Defaults to None, in which case self.threshold is used
+
         Returns:
             rt (int): response time in milliseconds
         """
@@ -65,5 +72,5 @@ class Accumulator:
 if __name__ == '__main__':
     accumulator = Accumulator(mu=0.5, noise_sd=0.3, starting_point=50, max_time=1000)
     accumulator.run()
-    rt, correct = accumulator._threshold_accumulator(100)
-    print(accumulator.rt_, accumulator.correct_)
+    rt = accumulator.threshold_accumulator(100)
+    print(accumulator.rt_)
