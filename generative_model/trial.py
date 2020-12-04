@@ -14,25 +14,46 @@ def log_mu_go(mu_go, SSD, max_SSD=550):
     return(0 if SSD == 0 else max(0, np.log(SSD / max_SSD) / 4 + 1 * mu_go))
 
 
+def init_default_params():
+    """return default parameters for a trial
+    """
+    return({'mu': {'go': 0.3, 'stop': 0.5},
+            'max_time': 1000,
+            'mu_delta_incorrect': 0.2,
+            'nondecision': {'go': 50, 'stop': 50},
+            'noise_sd': {'go': 2.2, 'stop': 2.2},
+            'threshold': 100,
+            'ntrials': {'go': 10000, 'stop': 2000},
+            'mu_go_grader': None,
+            'p_guess': None
+            })
+
+
+def fix_params(params):
+    """if any parameter keys are missing, add them with None as value
+
+    Args:
+        params (dict): parameter dictionary
+    """
+    default_params = init_default_params()
+    for k in default_params:
+        if k not in params:
+            params[k] = None
+    return(params)
+
+
 class Trial:
     def __init__(self, SSD=None, params=None, verbose=False, **kwargs):
         self.SSD = SSD
         if params is None:
             # use dummy settings for testing
             # NOTE: mu_delta_incorrect is a multiplier on mu_go
-            self.params = {
-                'mu': {'go': 0.5, 'stop': 0.5},
-                'max_time': 1000,
-                'mu_delta_incorrect': 0.9,
-                'nondecision': {'go': 50, 'stop': 50},
-                'noise_sd': {'go': 3.2, 'stop': 3.2},
-                'threshold': 100,
-                'mu_go_grader': None
-            }
+            self.params = init_default_params()
         else:
             self.params = params
         for key, value in kwargs.items():
             self.params[key] = value
+        self.params = fix_params(self.params)
 
         if verbose:
             print(self.params)
