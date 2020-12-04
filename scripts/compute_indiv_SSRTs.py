@@ -16,7 +16,7 @@ def get_args():
     parser.add_argument('--n_graded_go_trials', default=2000)
     parser.add_argument('--subjects', nargs='+',
                         help='subjects to run simulations on', required=True)
-    parser.add_argument('--abcd_dir', default='./abcd_data',
+    parser.add_argument('--abcd_dir', default='../abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--sim_dir',
                         default='../simulated_data/individual_data',

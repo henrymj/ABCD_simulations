@@ -77,7 +77,7 @@ if __name__ == '__main__':
     njobs_per_node = 36
     nlines = 0
 
-    with open('run_SSRTs.sh', 'w') as f:
+    with open(shell_path, 'w') as f:
         for start_idx in range(0, len(remaining_subs), nsubs_per_job):
             end_idx = start_idx + nsubs_per_job
             if end_idx > len(remaining_subs):
@@ -101,27 +101,25 @@ if __name__ == '__main__':
     print(N_line_str)
     print(n_line_str)
 
-
     # SHERLOCK
-
     sher_header = '''#!/bin/bash
-    #SBATCH --job-name=ssrt
-    #SBATCH --output=.out/ssrt%d.out
-    #SBATCH --error=.err/ssrt%d.err
-    #SBATCH --time=3:00:00
-    #SBATCH --mail-type=END
-    #SBATCH --mail-user=henrymj@stanford.edu
-    #SBATCH -N 1 # number of nodes requested - set to ceil(n rows in command script / 24)
-    #SBATCH -n %d # total number of mpi tasks requested - set to n rows in command script
-    #SBATCH -p normal
-    # Job Submission
-    #-----------
-    export PYTHONPATH=""
+#SBATCH --job-name=ssrt
+#SBATCH --output=.out/ssrt%d.out
+#SBATCH --error=.err/ssrt%d.err
+#SBATCH --time=3:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-user=henrymj@stanford.edu
+#SBATCH -N 1 # number of nodes requested - set to ceil(n rows in command script / 24)
+#SBATCH -n %d # total number of mpi tasks requested - set to n rows in command script
+#SBATCH -p normal
+# Job Submission
+#-----------
+export PYTHONPATH=""
 
-    source ~/miniconda3/etc/profile.d/conda.sh
-    conda activate py3-env
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate py3-env
 
-    '''
+'''
     nsubs_per_job = 48
     njobs_per_node = 24
     nlines = 0
