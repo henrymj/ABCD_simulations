@@ -39,6 +39,30 @@ class SimulateData():
 
         return self._convert_data_to_df(data_dict)
 
+    def _accumulate(self, trial, mu, start_time, noise_sd):
+        start_time = int(start_time)
+        accum = np.zeros(trial['max_time'])
+        accum_period = trial['max_time'] - start_time
+        drift = np.ones(accum_period) * mu
+        noise = np.random.randn(accum_period) * noise_sd
+        accum[start_time:trial['max_time']] = np.cumsum(drift + noise)
+
+        # retroactively include floor
+        negative_spots = np.where(accum < 0)[0]
+        for neg_idx in negative_spots:
+            # the following is true for the first index,
+            # but not necessarily afterwards
+            if accum[neg_idx] < 0:
+                accum[neg_idx:] += -(accum[neg_idx])
+
+        # threshold for RT
+        exceed_threshold = np.where(accum > trial['threshold'])[0]
+        if len(exceed_threshold) > 0:
+            rt = np.min(exceed_threshold)
+        else:
+            rt = np.nan
+        return rt
+
     def _simulate_guesses(self, data_dict, params, SSD):
         if SSD is None:  # go trials
             n_guess = int(self._n_guess_go)
@@ -56,19 +80,18 @@ class SimulateData():
                                           SSD=SSD,
                                           stop_init_time=stop_init_time)
             if SSD is not None:
-                stop_accum = 0
-                for time in range(1, trial['max_time']+1):
-                    if time >= trial['stop_init_time']:
-                        stop_accum = self._at_least_0(
-                            stop_accum + trial['mu_stop'] +
-                            np.random.normal(loc=0, scale=trial['noise_stop'])
-                        )
-                        trial['process_stop'].append(stop_accum)
-                    if stop_accum > trial['threshold']:
-                        break
-
-                if guess_RT <= time:
-                    trial['RT'] = guess_RT
+                stop_rt = self._accumulate(trial,
+                                           trial['mu_stop'],
+                                           trial['stop_init_time'],
+                                           trial['noise_stop']
+                                           )
+                out_rt = guess_RT
+                # sampled guess could be too long, or
+                # stop process may have beat it
+                if (guess_RT > trial['max_time']) | (~np.isnan(stop_rt) and
+                                                     (stop_rt < guess_RT)):
+                    out_rt = np.nan
+                trial['RT'] = out_rt
             else:
                 if guess_RT <= trial['max_time']:
                     trial['RT'] = guess_RT
@@ -80,21 +103,14 @@ class SimulateData():
         for trial_idx in range(int(self._n_guess_go),
                                self._n_trials_go):
             trial = self._init_trial_dict(params, trial_idx, condition='go')
-            go_accum = 0
-            stop_accum = 0
-            for time in range(1, trial['max_time']+1):
-                if time >= trial['nondecision_go']:
-                    go_accum = self._at_least_0(
-                        go_accum + trial['mu_go'] +
-                        np.random.normal(loc=0, scale=trial['noise_go'])
-                    )
-                    trial['process_go'].append(go_accum)
-                if go_accum > trial['threshold']:
-                    trial['RT'] = time
-                    break
+            go_rt = self._accumulate(trial,
+                                     trial['mu_go'],
+                                     trial['nondecision_go'],
+                                     trial['noise_go']
+                                     )
+            if ~np.isnan(go_rt):
+                trial['RT'] = go_rt
 
-            trial['accum_go'] = go_accum
-            trial['accum_stop'] = stop_accum
             data_dict = self._update_data_dict(data_dict, trial)
         return data_dict
 
@@ -109,29 +125,26 @@ class SimulateData():
         return data_dict
 
     def _independent_race_trial(self, data_dict, trial):
-        go_accum = 0
-        stop_accum = 0
-        for time in range(1, trial['max_time']+1):
-            if time >= trial['stop_init_time']:
-                stop_accum = self._at_least_0(
-                    stop_accum + trial['mu_stop'] +
-                    np.random.normal(loc=0, scale=trial['noise_stop'])
-                )
-                trial['process_stop'].append(stop_accum)
-            if time >= trial['nondecision_go']:
-                go_accum = self._at_least_0(
-                    go_accum + trial['mu_go'] +
-                    np.random.normal(loc=0, scale=trial['noise_go'])
-                )
-                trial['process_go'].append(go_accum)
-            if go_accum > trial['threshold']:
-                trial['RT'] = time
-                break
-            if stop_accum > trial['threshold']:
-                break
 
-        trial['accum_go'] = go_accum
-        trial['accum_stop'] = stop_accum
+        go_rt = self._accumulate(trial,
+                                 trial['mu_go'],
+                                 trial['nondecision_go'],
+                                 trial['noise_go']
+                                 )
+
+        stop_rt = self._accumulate(trial,
+                                   trial['mu_stop'],
+                                   trial['stop_init_time'],
+                                   trial['noise_stop']
+                                   )
+        # assign RT
+        out_rt = np.nan
+        if ~np.isnan(go_rt):
+            out_rt = go_rt
+        if ~np.isnan(go_rt) and ~np.isnan(stop_rt) and stop_rt < go_rt:
+            out_rt = np.nan
+        trial['RT'] = out_rt
+
         return self._update_data_dict(data_dict, trial)
 
     def _interactive_race_trial(self, data_dict, trial):
@@ -143,19 +156,16 @@ class SimulateData():
                     stop_accum + trial['mu_stop'] +
                     np.random.normal(loc=0, scale=trial['noise_stop'])
                 )
-                trial['process_stop'].append(stop_accum)
             if time >= trial['nondecision_go']:
                 go_accum = self._at_least_0(
                     go_accum + trial['mu_go'] -
                     trial['inhibition_interaction']*stop_accum +
                     np.random.normal(loc=0, scale=trial['noise_go'])
                 )
-                trial['process_go'].append(go_accum)
             if go_accum > trial['threshold']:
                 trial['RT'] = time
                 break
-        trial['accum_go'] = go_accum
-        trial['accum_stop'] = stop_accum
+
         return self._update_data_dict(data_dict, trial)
 
     def _blocked_input_trial(self, data_dict, trial):
@@ -167,20 +177,16 @@ class SimulateData():
                     trial['mu_stop'] + np.random.normal(
                         loc=0, scale=trial['noise_stop'])
                 )
-                trial['process_stop'].append(stop_accum)
             if time >= trial['nondecision_go']:
                 go_accum = self._at_least_0(
                     go_accum + trial['mu_go'] -
                     trial['inhibition_interaction']*stop_accum +
                     np.random.normal(loc=0, scale=trial['noise_go'])
                 )
-                trial['process_go'].append(go_accum)
             if go_accum > trial['threshold']:
                 trial['RT'] = time
                 break
 
-        trial['accum_go'] = go_accum
-        trial['accum_stop'] = stop_accum
         return self._update_data_dict(data_dict, trial)
 
     def _convert_data_to_df(self, data_dict):
@@ -320,10 +326,6 @@ class SimulateData():
             'RT': [],
             'mu_go': [],
             'mu_stop': [],
-            'accum_go': [],
-            'accum_stop': [],
-            'process_go': [],
-            'process_stop': [],
             }
 
     def _init_trial_dict(self, params, trial_idx,
@@ -341,10 +343,6 @@ class SimulateData():
                 'inhibition_interaction': params['inhibition_interaction'],
                 'threshold': params['threshold'],
                 'max_time': params['max_time'],
-                'accum_go': np.nan,
-                'accum_stop': np.nan,
-                'process_go': [],
-                'process_stop': [],
                 'RT': np.nan
             }
         return trial
