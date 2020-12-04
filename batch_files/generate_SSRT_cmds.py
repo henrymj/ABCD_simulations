@@ -47,9 +47,9 @@ def get_completed_subs(dir_path):
 
 if __name__ == '__main__':
 
-    shell_path = '../batch_files/TACC/run_SSRTs.sh'
-    launcher_path = '../batch_files/TACC/launch_SSRT_cmds.slurm'
-    sher_sim_file = '../batch_files/sherlock/sherlock_run_ssrt%d.batch'
+    shell_path = 'TACC/run_SSRTs.sh'
+    launcher_path = 'TACC/launch_SSRT_cmds.slurm'
+    sher_sim_file = 'sherlock/sherlock_run_ssrt%d.batch'
 
     # ## get subs w SSRT computations
     # In[16]:

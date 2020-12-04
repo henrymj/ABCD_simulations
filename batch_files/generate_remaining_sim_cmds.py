@@ -36,10 +36,10 @@ def replace(file_path, pattern, subst):
 if __name__ == '__main__':
     # ## get all subs
     # In[16]:
-    abcd_data = pd.read_csv('abcd_data/minimal_abcd_clean.csv')
+    abcd_data = pd.read_csv('../abcd_data/minimal_abcd_clean.csv')
     all_subs = abcd_data.NARGUID.unique()
 
-    with open('abcd_data/individual_mus.json') as json_file:
+    with open('../abcd_data/individual_mus.json') as json_file:
         mus_dict = json.load(json_file)
 
     all_subs_filtered = set(all_subs).difference(set(mus_dict['prob_subs']))
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     for sim_key in ['standard', 'guesses', 'graded_go', 'graded_both']:
         finished_sub_dict[sim_key] = set(
             strip_paths_to_subs(
-                glob('simulated_data/individual_data/%s_*.csv' % sim_key),
+                glob('../simulated_data/individual_data/%s_*.csv' % sim_key),
                 sim_key))
 
     # In[15]:
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     nsubs_per_job = 48
     njobs_per_node = 36
     nlines = 0
-    with open('run_sims.sh', 'w') as f:
+    with open('TACC/run_sims.sh', 'w') as f:
         for start_idx in range(0, len(remaining_subs), nsubs_per_job):
             end_idx = start_idx + nsubs_per_job
             if end_idx > len(remaining_subs):
