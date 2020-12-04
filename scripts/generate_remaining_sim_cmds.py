@@ -48,7 +48,7 @@ if __name__ == '__main__':
     # In[14]:
 
     finished_sub_dict = {}
-    for sim_key in ['standard', 'guesses', 'graded_mu_go_log']:
+    for sim_key in ['standard', 'guesses', 'graded_go', 'graded_both']:
         finished_sub_dict[sim_key] = set(
             strip_paths_to_subs(
                 glob('simulated_data/individual_data/%s_*.csv' % sim_key),
@@ -57,7 +57,8 @@ if __name__ == '__main__':
     # In[15]:
     finished_subs = finished_sub_dict['standard'].intersection(
         finished_sub_dict['guesses'],
-        finished_sub_dict['graded_mu_go_log'])
+        finished_sub_dict['graded_go'],
+        finished_sub_dict['graded_both'])
 
     # ## get remainder and write script sh file
     # In[28]:

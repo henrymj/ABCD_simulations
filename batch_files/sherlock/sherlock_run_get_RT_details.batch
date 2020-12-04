@@ -16,7 +16,7 @@ conda activate py3-env
 
 # python get_individual_results.py --job plot_ssrts
 # python get_individual_results.py --job plot_inhib_func
-python get_sim_RT_stats.py 
+python ../../get_sim_RT_stats.py 
 
 # echo " "
 # echo " Parameteric Job Complete"
