@@ -9,6 +9,7 @@ from collections import namedtuple
 import pandas as pd
 from stopsignalmetrics import StopData, SSRTmodel, PostStopSlow, Violations, StopSummary
 
+Trialdata = namedtuple('Trialdata', 'trialtype, SSD, rt, resp, correct')
 
 # SSD generators
 class fixedSSD:
@@ -39,6 +40,41 @@ class fixedSSD:
             yield SSDlist[i]
 
 
+# based on the ABCD tracking algorithm
+class trackingSSD:
+    def __init__(self, starting_ssd=50, step_size=50, min_ssd=0, max_ssd=550):
+        self.starting_ssd = starting_ssd
+        self.step_size = step_size
+        self.min_ssd = min_ssd
+        self.max_ssd = max_ssd
+
+        self.SSD = starting_ssd
+
+    def update(self, SSD, success):
+        """[summary]
+
+        Args:
+            SSD (int): current sssd
+            success (boolean): success or failure
+
+        Returns:
+            SSD (int): updated SSD
+        """
+        if SSD is None:
+            SSD = self.starting_ssd
+        elif success == True:
+            SSD = SSD + self.step_size
+        else:
+            SSD = SSD - self.step_size
+
+        if SSD < self.min_ssd:
+            self.SSD = min_ssd
+        elif SSD > self.max_ssd:
+            self.SSD = max_ssd
+        else:
+            self.SSD = SSD
+
+        return(self.SSD)
 
 # main study class
 class StopTaskStudy:
@@ -67,13 +103,11 @@ class StopTaskStudy:
         if 'subcode' not in self.params:
             self.params['subcode'] = np.random.randint(10e12)
 
-    def run(self):
-
-        Trialdata = namedtuple('Trialdata', 'trialtype, SSD, rt, resp, correct')
-        trialdata = []
-
+    def _generate_stop_trials_fixed(self):
         # generate stop trials
-        for i, SSD in enumerate(self.SSDgenerator.generate(self.params['ntrials']['stop'])):
+        trialdata = []
+        SSD = None
+        for SSD in self.SSDgenerator.generate(self.params['ntrials']['stop']):
             trial = Trial(SSD, self.params)
             rt, correct = trial.simulate()
             trialdata.append(Trialdata(
@@ -82,6 +116,36 @@ class StopTaskStudy:
                 rt=rt,
                 resp=(rt is not None),
                 correct=correct))
+        return(trialdata)
+
+    def _generate_stop_trials_tracking(self):
+        # generate stop trials
+        trialdata = []
+        SSD = None
+        stop_success = None
+        for i in range(self.params['ntrials']['stop']):
+            SSD = self.SSDgenerator.update(SSD, stop_success)
+            trial = Trial(SSD, self.params)
+            rt, correct = trial.simulate()
+            trialdata.append(Trialdata(
+                trialtype='stop',
+                SSD=SSD,
+                rt=rt,
+                resp=(rt is not None),
+                correct=correct))
+            stop_success = rt is None
+        return(trialdata)
+
+    def run(self):
+
+        if self.SSDgenerator.__class__.__name__ == 'fixedSSD':
+            trialdata = self._generate_stop_trials_fixed()
+        elif self.SSDgenerator.__class__.__name__ == 'trackingSSD':
+            trialdata = self._generate_stop_trials_tracking()
+        else:
+            raise Exception(f'SSD generator class {self.SSDgenerator.__class__.__name__} not yet implemented')
+ 
+
 
         # generate go trials
         SSD = -np.inf
@@ -133,6 +197,7 @@ def get_args():
     parser.add_argument('--min_ssd', help='minimum SSD value', default=0)
     parser.add_argument('--max_ssd', help='maximum SSD value', default=550)
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
+    parser.add_argument('--random_seed', help='random seed', type=int)
     parser.add_argument('--n_subjects', nargs='+',
                         help='number of subjects to simulate', default=1)
     parser.add_argument('--out_dir',
@@ -151,8 +216,10 @@ if __name__ == '__main__':
     else:
         params = None
     print(params)
-
-    ssd = fixedSSD(np.arange(args.min_ssd, args.max_ssd + args.ssd_step, args.ssd_step))
+    if args.random_seed is not None:
+        np.random.seed(args.random_seed)
+    #ssd = fixedSSD(np.arange(args.min_ssd, args.max_ssd + args.ssd_step, args.ssd_step))
+    ssd = trackingSSD()
     study = StopTaskStudy(ssd, args.out_dir)
 
     # save some extra params for output to json
