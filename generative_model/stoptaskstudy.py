@@ -241,7 +241,7 @@ if __name__ == '__main__':
 
     for i in range(args.n_subjects):
         print(f'running subject {i + 1}')
-        study = StopTaskStudy(ssd, args.out_dir)
+        study = StopTaskStudy(ssd, args.out_dir, params=params)
 
         # save some extra params for output to json
         study.params['args'] = args.__dict__
