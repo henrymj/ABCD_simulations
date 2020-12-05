@@ -1,11 +1,12 @@
 import pandas as pd
+import numpy as np
 import argparse
 import json
 from os import path
 from glob import glob
-from simulate_indviduals import generate_exgauss_sampler_from_fit
-from compute_SSRTs import generate_out_df,\
-    simulate_graded_RTs_and_sort
+from simulate_individuals import generate_exgauss_sampler_from_fit
+from stopsignalmetrics import SSRTmodel
+from utils import SimulateData
 
 
 def get_args():
@@ -23,6 +24,103 @@ def get_args():
                         help='location to save simulated data')
     args = parser.parse_args()
     return(args)
+
+
+def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
+    info = []
+    ssrtmodel = SSRTmodel(model='replacement')
+    goRTs = data.loc[data.goRT.notnull(), 'goRT'].values
+    SSDs = [i for i in data.SSD.unique() if i == i]
+    SSDs.sort()
+
+    for SSD in SSDs:
+        curr_df = data.query(
+            "condition=='go' | (condition=='stop' and SSD == %s)" % SSD
+            ).copy()
+        curr_metrics = ssrtmodel.fit_transform(curr_df)
+        if (curr_metrics['p_respond'] == 0) | (curr_metrics['p_respond'] == 1):
+            curr_info = [v for v in curr_metrics.values()] +\
+                    [SSD, np.nan, np.nan]
+        else:
+            goRTs_w_guesses = add_guess_RTs_and_sort(goRTs,
+                                                     SSD,
+                                                     SSD_guess_dict,
+                                                     guess_sampler)
+            SSRT_w_guesses = SSRT_wReplacement(curr_metrics,
+                                               goRTs_w_guesses)
+            SSRT_w_graded = SSRT_wReplacement(curr_metrics,
+                                              graded_go_dict[SSD].copy())
+
+            curr_info = [v for v in curr_metrics.values()] +\
+                        [SSD, SSRT_w_guesses, SSRT_w_graded]
+        info.append(curr_info)
+        cols = [k for k in curr_metrics.keys()] +\
+               ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
+
+    return pd.DataFrame(
+        info,
+        columns=cols)
+
+
+def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict, guess_sampler):
+    curr_n = len(goRTs)
+    p_guess = SSD_guess_dict[SSD]
+    if p_guess == 1.0:
+        guess_RTs = guess_sampler(curr_n)
+        guess_RTs.sort()
+        return guess_RTs
+    elif p_guess <= 0:  # SSDs 550 and 650
+        goRTs.sort()
+        return goRTs
+    else:
+        # Equation logic:
+        # p_guess = n_guess / (n_guess + curr_n) =>
+        # n_guess = (p_guess * curr_n) / (1 - p_guess)
+        n_guess = int(np.rint(float((p_guess*curr_n)/(1-p_guess))))
+        guess_RTs = guess_sampler(n_guess)
+        all_RTs = np.concatenate([goRTs, guess_RTs])
+        all_RTs.sort()
+        return all_RTs
+
+
+def simulate_graded_RTs_and_sort(n_trials, SSD, sub_params=None):
+    sub_params = sub_params if sub_params else {}
+    simulator = SimulateData()
+    params = simulator._init_params(sub_params)
+    params['n_trials_stop'] = n_trials
+    params['n_trials_go'] = n_trials
+
+    params['mu_go'] = simulator._log_grade_mu(params['mu_go'], SSD)
+    simulator._set_n_trials(params)
+    simulator._set_n_guesses(params)  # no guessing is happening
+
+    data_dict = simulator._simulate_go_trials(simulator._init_data_dict(),
+                                              params)
+    goRTs = data_dict['RT'].copy()
+    goRTs.sort()
+    return goRTs
+
+
+def get_nth_RT(P_respond, goRTs):
+    """Get nth RT based P(response|signal) and sorted go RTs."""
+    nth_index = int(np.rint(P_respond*len(goRTs))) - 1
+    if nth_index < 0:
+        nth_RT = goRTs[0]
+    elif nth_index >= len(goRTs):
+        nth_RT = goRTs[-1]
+    else:
+        nth_RT = goRTs[nth_index]
+    return nth_RT
+
+
+def SSRT_wReplacement(metrics, sorted_go_RTs):
+    P_respond = metrics['p_respond']
+    goRTs_w_replacements = np.concatenate((
+        sorted_go_RTs,
+        [metrics['max_RT']] * metrics['omission_count']))
+    goRTs_w_replacements.sort()
+    nrt = get_nth_RT(P_respond, goRTs_w_replacements)
+    return nrt - metrics['mean_SSD']
 
 
 if __name__ == '__main__':
@@ -74,7 +172,7 @@ if __name__ == '__main__':
             print("KeyError error for sub {0}: {1}".format(sub, err))
             issue_subs.append(sub)
             continue
-if len(issue_subs > 0):
-    print('issue subs: ', issue_subs)
-else:
-    print('no problematic subs run here!')
+    if len(issue_subs) > 0:
+        print('issue subs: ', issue_subs)
+    else:
+        print('no problematic subs run here!')

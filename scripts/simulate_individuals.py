@@ -1,6 +1,8 @@
 import json
 import pandas as pd
+import numpy as np
 import argparse
+import scipy.stats as sstats
 from utils import SimulateData
 
 
@@ -94,7 +96,7 @@ if __name__ == '__main__':
             print("KeyError error for sub {0}: {1}".format(sub, err))
             issue_subs.append(sub)
             continue
-if len(issue_subs) > 0:
-    print('issue subs: ', issue_subs)
-else:
-    print('no problematic subs run here!')
+    if len(issue_subs) > 0:
+        print('issue subs: ', issue_subs)
+    else:
+        print('no problematic subs run here!')
