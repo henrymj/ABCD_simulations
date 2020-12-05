@@ -17,6 +17,11 @@ def get_args():
                         help='choose one from [plot_ssrts,\
                               plot_inhib_func, calc_ssrts, all]',
                         type=str)
+    parser.add_argument('--abcd_dir', default='../abcd_data',
+                        help='location of ABCD data')
+    parser.add_argument('--ssrt_dir',
+                        default='../ssrt_metrics',
+                        help='location to save simulated data')
     args = parser.parse_args()
     return(args)
 
@@ -43,27 +48,28 @@ if __name__ == '__main__':
     print('job = %s' % args.job)
 
     print('loading in data...')
-    ssrt_metrics = dd.read_csv('../ssrt_metrics/individual_metrics/*.csv',
+    ssrt_metrics = dd.read_csv('%s/individual_metrics/*.csv' % args.ssrt_dir,
                                include_path_column='filename')
     ssrt_metrics['NARGUID'] = ssrt_metrics['filename'].apply(
         lambda x: x.split('_')[-1].replace('.csv', ''), meta=str)
     ssrt_metrics['underlying distribution'] = ssrt_metrics['filename'].apply(
-        lambda x: x.split('/')[-1].split('_')[0], meta=str)
-    ssrt_metrics['underlying distribution'] = ssrt_metrics[
-        'underlying distribution'
-        ].map({'graded': 'graded_mu_go_log',
-               'standard': 'standard',
-               'guesses': 'guesses'})
+        lambda x: '_'.join(x.split('/')[-1].split('_')[:-1]), meta=str)
+    # ssrt_metrics['underlying distribution'] = ssrt_metrics[
+    #     'underlying distribution'
+    #     ].map({'graded': 'graded_mu_go',
+    #            'standard': 'standard',
+    #            'guesses': 'guesses'})
     ssrt_metrics = ssrt_metrics.drop('filename', axis=1)
+    ssrt_metrics['graded_both'] = ssrt_metrics['SSRT_w_graded']
     ssrt_metrics = ssrt_metrics.rename(
         columns={'SSRT': 'standard',
                  'SSRT_w_guesses': 'guesses',
-                 'SSRT_w_graded': 'graded_mu_go_log'})
+                 'SSRT_w_graded': 'graded_go'})
 
     print('melting...')
     melt_df = dd.melt(ssrt_metrics,
                       id_vars=['SSD', 'underlying distribution'],
-                      value_vars=['standard', 'guesses', 'graded_mu_go_log'],
+                      value_vars=['standard', 'guesses', 'graded_go', 'graded_both'],
                       var_name='assumed distribution',
                       value_name='SSRT')
 
@@ -102,7 +108,7 @@ if __name__ == '__main__':
     if args.job in ['plot_inhib_func', 'all']:
         print('plotting Inhibition Function...')
         abcd_inhib_func_per_sub = dd.read_csv(
-            '../abcd_data/abcd_inhib_func_per_sub.csv')
+            '%s/abcd_inhib_func_per_sub.csv' % args.abcd_dir)
         full_inhib_func_df = dd.concat(
             [ssrt_metrics[abcd_inhib_func_per_sub.columns],
              abcd_inhib_func_per_sub],
@@ -119,7 +125,7 @@ if __name__ == '__main__':
 
     if args.job in ['calc_ssrts', 'all']:
         print('Calculating Expected SSRTs...')
-        ABCD_SSD_dists = pd.read_csv('../abcd_data/SSD_dist_by_subj.csv')
+        ABCD_SSD_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir)
 
         expected_ssrts = ssrt_metrics.groupby(
             ['NARGUID', 'underlying distribution']
@@ -137,4 +143,4 @@ if __name__ == '__main__':
             )
 
         print('Saving expected SSRTs')
-        pivot_ssrts.to_csv('../ssrt_metrics/expected_ssrts.csv')
+        pivot_ssrts.to_csv('%s/expected_ssrts.csv' % args.ssrt_dir)
