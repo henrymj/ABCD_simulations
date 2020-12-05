@@ -22,6 +22,9 @@ def get_args():
     parser.add_argument('--ssrt_dir',
                         default='../ssrt_metrics',
                         help='location to save simulated data')
+    parser.add_argument('--fig_dir',
+                        default='../figures',
+                        help='location to save simulated data')
     args = parser.parse_args()
     return(args)
 
@@ -89,7 +92,7 @@ if __name__ == '__main__':
                          data=subset_melt_df,
                          palette=['k', '#1f77b4', '#ff7f0e', '#2ca02c'],
                          linewidth=3)
-        plt.savefig('figures/SSRT_by_SSD_supplement.png')
+        plt.savefig('%s/SSRT_by_SSD_supplement.png' % args.fig_dir)
 
         print('plotting SSRT by SSD...')
         fig_idx = (subset_melt_df['assumed distribution'] == 'standard') &\
@@ -103,7 +106,7 @@ if __name__ == '__main__':
             style='underlying distribution',
             data=main_fix_melt_df,
             linewidth=3)
-        plt.savefig('figures/SSRT_by_SSD.png')
+        plt.savefig('%s/SSRT_by_SSD.png' % args.fig_dir)
 
     if args.job in ['plot_inhib_func', 'all']:
         print('plotting Inhibition Function...')
@@ -121,7 +124,7 @@ if __name__ == '__main__':
                          data=full_inhib_func_df.query('SSD <= 500').compute(),
                          linewidth=3)
         _ = plt.ylim([0, 1])
-        plt.savefig('figures/inhibition_function.png')
+        plt.savefig('%s/inhibition_function.png' % args.fig_dir)
 
     if args.job in ['calc_ssrts', 'all']:
         print('Calculating Expected SSRTs...')
