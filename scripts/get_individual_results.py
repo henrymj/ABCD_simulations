@@ -87,7 +87,7 @@ if __name__ == '__main__':
                          hue='assumed distribution',
                          style='underlying distribution',
                          data=subset_melt_df,
-                         palette=['k', '#1f77b4', '#ff7f0e'],
+                         palette=['k', '#1f77b4', '#ff7f0e', '#2ca02c'],
                          linewidth=3)
         plt.savefig('figures/SSRT_by_SSD_supplement.png')
 
