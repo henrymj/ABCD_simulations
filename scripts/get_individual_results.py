@@ -31,7 +31,7 @@ def get_args():
 
 def weight_ssrts(sub_df, ABCD_SSD_dists):
     sub_df = sub_df.copy()
-    indiv_SSRT = np.zeros((1, 3))
+    indiv_SSRT = np.zeros((1, 4))
     sub = sub_df['NARGUID'].unique()[0]
     sub_dists = ABCD_SSD_dists.query("NARGUID=='%s'" % sub)
     for SSD in sub_dists.SSDDur:
