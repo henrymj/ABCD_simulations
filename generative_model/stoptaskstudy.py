@@ -22,7 +22,7 @@ class StopTaskStudy:
         self.params = fix_params(self.params)
         self.outdir = outdir
 
-        if not os.path.exists(outdir):
+        if outdir is not None and not os.path.exists(outdir):
             os.makedirs(outdir)
         self.SSDgenerator = SSDgenerator
         self.trialdata_ = None
