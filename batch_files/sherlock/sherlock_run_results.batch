@@ -14,7 +14,7 @@ export PYTHONPATH=""
 source ~/miniconda3/etc/profile.d/conda.sh 
 conda activate py3-env
 
-python get_individual_results.py --job all
+python ../../scripts/get_individual_results.py  --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --ssrt_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics --job all
 # python get_individual_results.py --job plot_ssrts
 # python get_individual_results.py --job plot_inhib_func
 # python get_individual_results.py --job calc_ssrts
