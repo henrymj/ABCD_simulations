@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
     indiv_ssd_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir,
                                   index_col=0)
-    with open('%s/individual_mus.json' % args.abcd_dir) as json_file:
+    with open('%s/assigned_mus.json' % args.abcd_dir) as json_file:
         mus_dict = json.load(json_file)
 
     SSD0_RTs = abcd_data.query(
