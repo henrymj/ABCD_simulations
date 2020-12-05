@@ -54,11 +54,13 @@ def stopsignal_model(parameters):
     study = StopTaskStudy(ssd, None, params=params)
 
     trialdata = study.run()
-
+    metrics = study.get_stopsignal_metrics()
     # summarize data - go trials are labeled with SSD of -inf so that
     # they get included in the summary
     stop_data = trialdata.groupby('SSD').mean().query('SSD >= 0').resp.values
-    return {'data': stop_data}
+    return {'presp': stop_data,
+            'mean_go_RT': metrics['mean_go_RT'],
+            'mean_stopfail_RT': metrics['mean_stopfail_RT']}
 
 parameter_prior = Distribution(mu_go=RV("uniform", 0, 1),
                                mu_stop_delta=RV("uniform", 0, 1),
@@ -68,8 +70,15 @@ parameter_prior.get_parameter_names()
 
 # +
 
+
+def rmse(a, b):
+    return(np.sqrt(np.sum((a - b)**2)))
+
 def distance(simulation, data):
-    return(np.sqrt(np.sum((simulation['data'] - data['data'])**2)))
+    presp_rmse = rmse(simulation['presp'], data['presp'])
+    gort_rmse = rmse(simulation['mean_go_RT'], data['go_rt'])/200
+    stopfailrt_rmse = rmse(simulation['mean_stopfail_RT'], data['stopfail_rt'])/10
+    return(presp_rmse + gort_rmse + stopfailrt_rmse)
 
 abc = ABCSMC(stopsignal_model, parameter_prior, distance)
 
@@ -78,9 +87,9 @@ abc = ABCSMC(stopsignal_model, parameter_prior, distance)
 db_path = ("sqlite:///" +
            os.path.join(tempfile.gettempdir(), "test.db"))
 observed_presp = pd.read_csv('presp_by_ssd_inperson.txt',  delimiter=r"\s+", index_col=0)
-abc.new(db_path, {"data": observed_presp.presp.values})
+abc.new(db_path, {"presp": observed_presp.presp.values, 'go_rt': 455.367, 'stopfail_rt': 219.364})
 
-history = abc.run(minimum_epsilon=.1, max_nr_populations=100)
+history = abc.run(minimum_epsilon=.1, max_nr_populations=10)
 
 fig, ax = plt.subplots()
 for t in range(history.max_t+1):
