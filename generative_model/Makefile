@@ -1,5 +1,6 @@
 clean:
-	rm simulated_data/pseudosubjects/*
+	-rm simulated_data/search/*
+	-rm simulated_data/pseudosubjects/*
 test:
 	python -m pytest
 
