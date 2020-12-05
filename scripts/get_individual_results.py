@@ -142,7 +142,7 @@ if __name__ == '__main__':
         pivot_ssrts = expected_ssrts.pivot(
             index='NARGUID',
             columns='underlying distribution',
-            values=['standard', 'guesses', 'graded_mu_go_log']
+            values=['standard', 'guesses', 'graded_go', 'graded_both']
             )
 
         print('Saving expected SSRTs')
