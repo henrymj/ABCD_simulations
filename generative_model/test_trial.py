@@ -43,3 +43,79 @@ def test_trial_kwargs():
     rt, correct = trial.simulate(SSD=-100, verbose=True)
     assert rt is None  # should be a succesful stop
     assert correct is None
+
+
+# test with guessing 
+
+def test_guess_func():
+    # go trial, go guessing turned off, should return None
+    p_guess = {'go': None, 'stop': None}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(p_guess=p_guess)
+    rt, correct = trial.get_guess_rt(trial.params)
+    assert rt is None and correct is None
+
+    # go trial, go guessing turned one, should return non-None
+    p_guess = {'go': 1., 'stop': None}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(p_guess=p_guess)
+    rt, correct = trial.get_guess_rt(trial.params)
+    assert rt is not None and correct is not None
+
+    # stop trial, stop guessing turned off, should return None
+    p_guess = {'go': None, 'stop': None}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(SSD=0, p_guess=p_guess)
+    rt, correct = trial.get_guess_rt(trial.params)
+    assert rt is None and correct is None
+
+    # stop trial, stop guessing turned on, should return non-None
+    p_guess = {'go': None, 'stop': 1}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(SSD=0, p_guess=p_guess)
+    rt, correct = trial.get_guess_rt(trial.params)
+    assert rt is not None and correct is not None
+
+    # stop trial, stop guessing turned on, should return non-None
+    p_guess = {'go': None, 'stop': 'ABCD'}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(SSD=0, p_guess=p_guess)
+    rt, correct = trial.get_guess_rt(trial.params)
+    assert rt is not None and correct is not None
+
+    # stop trial, stop guessing turned on, should return non-None
+    p_guess = {'go': None, 'stop': 'ABCD'}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(SSD=550, p_guess=p_guess)
+    rt, correct = trial.get_guess_rt(trial.params)
+    assert rt is None and correct is None
+
+def test_trial_pguess_go():
+    p_guess = {'go': 1., 'stop': None}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(p_guess=p_guess)
+    rt, correct = trial.simulate()
+    assert trial.params['is_guess']
+
+
+def test_trial_pguess_false():
+    p_guess = {'go': 0., 'stop': None}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(p_guess=p_guess)
+    rt, correct = trial.simulate()
+    assert trial.params['is_guess'] is False
+
+
+def test_trial_pguess_stop():
+    p_guess = {'go': 1., 'stop': 'ABCD'}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(SSD=0, p_guess=p_guess)
+    rt, correct = trial.simulate()
+    assert trial.params['is_guess']
+
+def test_trial_pguess_stop_longSSD():
+    p_guess = {'go': 1., 'stop': 'ABCD'}
+    mu={'go': 0.5, 'stop': 0.9}
+    trial = Trial(SSD=550, p_guess=p_guess)
+    rt, correct = trial.simulate()
+    assert trial.params['is_guess'] is False
