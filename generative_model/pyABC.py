@@ -106,9 +106,9 @@ def stopsignal_model(parameters):
 
     return(results)
 
-parameter_prior = Distribution(mu_go=RV("uniform", 0, .5),
+parameter_prior = Distribution(mu_go=RV("uniform", .1, .5),
                                mu_stop_delta=RV("uniform", 0, 1),
-                              mu_delta_incorrect=RV("uniform", 0, 0.5),
+                              mu_delta_incorrect=RV("uniform", 0, 0.2),
                               noise_sd=RV("uniform", 2, 5),
                               nondecision=RV("uniform", 25, 75))
 parameter_prior.get_parameter_names()
