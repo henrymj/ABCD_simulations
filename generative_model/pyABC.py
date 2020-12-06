@@ -41,7 +41,7 @@ from stoptaskstudy import StopTaskStudy
 # %%
 # set to True for debugging outputs
 
-debug = True
+debug = False
 
 if debug:
     df_logger = logging.getLogger('Distance')
