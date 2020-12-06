@@ -137,7 +137,8 @@ if test_model:
 distance_adaptive = pyabc.AdaptivePNormDistance(
     p=2, scale_function=pyabc.distance.root_mean_square_deviation)
 
-abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive)
+abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive,
+    acceptor = pyabc.UniformAcceptor(use_complete_history=True))
 
 
 # %%
