@@ -134,7 +134,8 @@ if test_model:
 # which deals with the fact that different outcome measures have
 # different scales - automatically scales to them
 
-distance_adaptive = pyabc.AdaptivePNormDistance(p=2)
+distance_adaptive = pyabc.AdaptivePNormDistance(
+    p=2, scale_function=pyabc.distance.root_mean_square_deviation)
 
 abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive)
 
