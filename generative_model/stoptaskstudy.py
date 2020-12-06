@@ -141,7 +141,9 @@ def get_args():
     parser.add_argument('--max_ssd', help='maximum SSD value', default=550)
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
-    parser.add_argument('--p_guess_file', help='file with p_guess per ssd, should contain columns labeled SSD and p_guess')
+    parser.add_argument('--p_guess_go', help='p_guess on go trials (default None)')
+    parser.add_argument('--stop_guess_ABCD', help='use SSD-dependent guessing based on ABCD data', action='store_true')
+
     parser.add_argument('--guess_param_file', default='exgauss_params.json',
                         help='file with exgauss params for guesses')
     parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
@@ -159,13 +161,15 @@ if __name__ == '__main__':
     if args.paramfile is not None:
         with open(args.paramfile) as f:
             params = json.load(f)
+        if 'p_guess' not in params:
+            params['p_guess'] = {'go': None, 'stop': None}
+        if args.p_guess_go is not None:
+            params['p_guess']['go'] = float(args.p_guess_go)
+        if args.stop_guess_ABCD is not None:
+            params['p_guess']['stop'] = 'ABCD'
     else:
         params = None
     print(params)
-
-    if args.p_guess_file is not None:
-        p_guess = pd.read_csv(args.p_guess_file, index_col=0)
-        assert 'SSD' in p_guess.columns and 'p_guess' in p_guess.columns
 
     if args.random_seed is not None:
         np.random.seed(args.random_seed)
