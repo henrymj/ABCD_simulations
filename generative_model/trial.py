@@ -26,8 +26,13 @@ def init_default_params():
             'threshold': 100,
             'ntrials': {'go': 10000, 'stop': 2000},
             'mu_go_grader': None,
-            'p_guess': None,
-            'exgauss_params': None
+            'p_guess': {'go': None, 'stop': None},
+            'exgauss_params': {'K': 2.2642549666245166,
+                               'loc': 196.16188286978473,
+                               'scale': 89.32217452947589,
+                               'lambda': 0.004944420332039798,
+                               'beta': 202.24817730806768},
+            'is_guess': None
             })
 
 
@@ -51,6 +56,25 @@ def sample_guess_rt(exgauss_params):
                       exgauss_params['scale']))
 
 
+def p_guess_by_ssd(SSD, paramset=None, params=None):
+    # use data from ABCD to compute p guess per ssd
+    # using 2nd order polynomial function relating
+    # SSD to p guess
+    # see pguess_curve_fit.ipynb for fitting of these params
+
+    if paramset == 'ABCD':
+        params = [-4.26213331e-03, 4.51459691e-06, 1.01061072e+00]
+
+    if params is None:
+        raise Exception('either params or paramset must be specified')
+
+    def polyfunc(x, a, b, c):
+        return a * x + b * x**2 + c
+
+    pguess = polyfunc(SSD, *params)
+    return(np.clip(pguess, 0, 1))
+
+
 class Trial:
     def __init__(self, SSD=None, params=None, verbose=False, **kwargs):
         self.SSD = SSD
@@ -63,12 +87,38 @@ class Trial:
         for key, value in kwargs.items():
             self.params[key] = value
         self.params = fix_params(self.params)
+        self.verbose = verbose
 
-        if verbose:
+        if self.verbose:
             print(self.params)
 
         self.trial_type = 'go' if self.SSD is None else 'stop'
         self.rt_ = None
+
+    def get_guess_rt(self, trial_params):
+        guess_rt = None
+        guess_correct = None
+        if trial_params['p_guess']['go'] is not None\
+            or trial_params['p_guess']['stop'] is not None:
+            if trial_params['exgauss_params'] is None:
+                raise Exception('Exgauss params must be specified if using the guessing model')
+
+            if self.trial_type == 'go':
+                p_fast_guess = trial_params['p_guess']['go']
+            else:
+                if trial_params['p_guess']['stop'] is None:
+                    p_fast_guess = None
+                elif isinstance(trial_params['p_guess']['stop'], str):
+                    p_fast_guess = p_guess_by_ssd(
+                        self.SSD, trial_params['p_guess']['stop'])
+                else:
+                    p_fast_guess = trial_params['p_guess']['stop']
+
+            if p_fast_guess is not None and np.random.rand() < p_fast_guess:
+                guess_rt = sample_guess_rt(trial_params['exgauss_params'])
+                guess_correct = np.random.rand() < 0.5  # assume unbiased guessing
+
+        return(guess_rt, guess_correct)
 
     def simulate(self, trial_params=None, verbose=False, **kwargs):
         if trial_params is None:
@@ -80,19 +130,8 @@ class Trial:
             print(trial_params)
 
         # first see if it's a fast guess, and if so then sample an RT and accuracy
-        if trial_params['p_guess'] is not None:
-            if trial_params['exgauss_params'] is None:
-                raise Exception('Exgauss params must be specified if using the guessing model')
-
-            if self.trial_type == 'go':
-                p_fast_guess = trial_params['p_guess']['go']
-            else:
-                p_fast_guess = trial_params['p_guess']['stop'][self.SSD]
-            if np.random.rand() < p_fast_guess:
-                self.rt_ = sample_guess_rt(trial_params['exgauss_params'])
-
-            self.correct_ = np.random.rand() < 0.5  # assume unbiased guessing
-            return(self.rt_, self.correct_)
+        # this will then race against the stop racer
+        guess_rt, guess_correct = self.get_guess_rt(trial_params)
 
         # apply mu_go grader on stop trials
         if self.trial_type == 'stop' and trial_params['mu_go_grader'] == 'log':
@@ -108,7 +147,7 @@ class Trial:
         correct_rt = accumulator.threshold_accumulator(threshold=trial_params['threshold'])
 
         accumulator = Accumulator(
-            mu=trial_params['mu']['go'] * trial_params['mu_delta_incorrect'],
+            mu=mu_go * trial_params['mu_delta_incorrect'],
             noise_sd=trial_params['noise_sd']['go'],
             starting_point=trial_params['nondecision']['go'],
             max_time=trial_params['max_time'])
@@ -119,10 +158,16 @@ class Trial:
             self.rt_ = None
             self.correct_ = None
         else:
-            self.rt_ = np.min([replace_none(correct_rt),
-                               replace_none(incorrect_rt)])
+            if guess_rt is not None:
+                self.params['is_guess'] = True
+                self.rt_ = np.min([guess_rt, trial_params['max_time']])
+                self.correct_ = guess_correct
+            else:
+                self.params['is_guess'] = False
+                self.rt_ = np.min([replace_none(correct_rt),
+                                   replace_none(incorrect_rt)])
 
-            self.correct_ = replace_none(correct_rt) < replace_none(incorrect_rt)
+                self.correct_ = replace_none(correct_rt) < replace_none(incorrect_rt)
 
         if self.trial_type == 'stop':
             accumulator = Accumulator(
@@ -135,13 +180,13 @@ class Trial:
             if self.rt_ is not None and stop_rt is not None and stop_rt < self.rt_:
                 self.rt_ = None
                 self.correct_ = None
-            if verbose:
-                print()
 
         return(self.rt_, self.correct_)
 
 
 if __name__ == '__main__':
-    trial = Trial(mu={'go': 0, 'stop': 0}, verbose=True)
+    trial = Trial(mu={'go': 0.5, 'stop': 0}, 
+                  p_guess={'go': 0.9, 'stop': None})
 
-    trial.simulate(verbose=True)
+    trial.simulate()
+    print(trial.__dict__)
