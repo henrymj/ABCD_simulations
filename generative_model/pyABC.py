@@ -141,7 +141,7 @@ abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive)
 
 # %%
 # set up the database for the simulation
-db_path = pyabc.create_sqlite_db_id(file_="./adaptive_distance.db")
+db_path = 'sqlite:///adaptive_distance.db' # pyabc.create_sqlite_db_id(file_="./adaptive_distance.db")
 
 # observed metrics specified here by hand.  should instead store metrics to json
 # and load those
