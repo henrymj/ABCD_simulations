@@ -7,7 +7,7 @@ import numpy as np
 from trial import Trial, init_default_params, fix_params
 from collections import namedtuple
 import pandas as pd
-from stopsignalmetrics import StopData, SSRTmodel, PostStopSlow, Violations, StopSummary
+from stopsignalmetrics import StopData, SSRTmodel
 from ssd import trackingSSD, fixedSSD
 Trialdata = namedtuple('Trialdata', 'trialtype, SSD, rt, resp, correct')
 

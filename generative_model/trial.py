@@ -99,7 +99,7 @@ class Trial:
         guess_rt = None
         guess_correct = None
         if trial_params['p_guess']['go'] is not None\
-            or trial_params['p_guess']['stop'] is not None:
+                or trial_params['p_guess']['stop'] is not None:
             if trial_params['exgauss_params'] is None:
                 raise Exception('Exgauss params must be specified if using the guessing model')
 
@@ -185,7 +185,7 @@ class Trial:
 
 
 if __name__ == '__main__':
-    trial = Trial(mu={'go': 0.5, 'stop': 0}, 
+    trial = Trial(mu={'go': 0.5, 'stop': 0},
                   p_guess={'go': 0.9, 'stop': None})
 
     trial.simulate()
