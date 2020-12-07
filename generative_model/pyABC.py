@@ -25,17 +25,14 @@ import json
 from pyabc import (ABCSMC,
                    RV, Distribution)
 import numpy as np
-import scipy.stats as st
-import tempfile
 import os
 import pandas as pd
-import matplotlib.pyplot as plt
 import logging
 import argparse
 
 from ssd import fixedSSD
 from stoptaskstudy import StopTaskStudy
-# %matplotlib inline
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='fit stop model params using ABC-SMC')
@@ -57,6 +54,7 @@ def get_args():
     # parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
     return parser.parse_args()
 
+
 # create a single-layer metrics dict for output
 # since the pickler can't handle multilevel dicts
 def cleanup_metrics(metrics):
@@ -73,23 +71,21 @@ def cleanup_metrics(metrics):
 def stopsignal_model(parameters):
     paramfile = 'params.json'
     with open(paramfile) as f:
-            params = json.load(f)
+        params = json.load(f)
 
     # install the parameters from the simulation
     parameters['nondecision'] = int(parameters['nondecision'])
     params['mu']['go'] = parameters['mu_go']
     params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
-    params['mu_delta_incorrect']  = parameters['mu_delta_incorrect']
+    params['mu_delta_incorrect'] = parameters['mu_delta_incorrect']
     params['noise_sd'] = {'go': parameters['noise_sd'],
                           'stop': parameters['noise_sd']}
     params['nondecision'] = {'go': parameters['nondecision'],
                              'stop': parameters['nondecision']}
-    #print(params)
     # TBD
     #    if args.p_guess_file is not None:
     #        p_guess = pd.read_csv(args.p_guess_file, index_col=0)
     #        assert 'SSD' in p_guess.columns and 'p_guess' in p_guess.columns
-
 
     min_ssd, max_ssd, ssd_step = 0, 550, 50
     ssd = fixedSSD(np.arange(min_ssd, max_ssd + ssd_step, ssd_step))
@@ -102,15 +98,16 @@ def stopsignal_model(parameters):
     # they get included in the summary
     stop_data = trialdata.groupby('SSD').mean().query('SSD >= 0').resp.values
     results = {}
-    
+
     metrics = cleanup_metrics(metrics)
-    for k in [ 'mean_go_RT', 'mean_stopfail_RT', 'go_acc']:
+    for k in ['mean_go_RT', 'mean_stopfail_RT', 'go_acc']:
         results.update({k: metrics[k]})
     # need to separate presp values since distance fn can't take a vector
     for i, value in enumerate(stop_data):
         results[f'presp_{i}'] = value
 
     return(results)
+
 
 if __name__ == '__main__':
     args = get_args()
@@ -131,14 +128,13 @@ if __name__ == '__main__':
         df_logger = logging.getLogger('Distance')
         df_logger.setLevel(logging.DEBUG)
 
-
     # set up priors for ABC
     # these values are based on some hand-tweaking using the in-person dataset
     parameter_prior = Distribution(mu_go=RV("uniform", .1, .5),
-                                mu_stop_delta=RV("uniform", 0, 1),
-                                mu_delta_incorrect=RV("uniform", 0, 0.2),
-                                noise_sd=RV("uniform", 2, 5),
-                                nondecision=RV("uniform", 25, 75))
+                                   mu_stop_delta=RV("uniform", 0, 1),
+                                   mu_delta_incorrect=RV("uniform", 0, 0.2),
+                                   noise_sd=RV("uniform", 2, 5),
+                                   nondecision=RV("uniform", 25, 75))
 
     parameter_prior.get_parameter_names()
 
@@ -152,11 +148,10 @@ if __name__ == '__main__':
     # set up the sampler
     # use acceptor which seems to improve performance with adaptive distance
     abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive,
-        acceptor = pyabc.UniformAcceptor(use_complete_history=True))
-
+                 acceptor=pyabc.UniformAcceptor(use_complete_history=True))
 
     # set up the database for the simulation
-    db_path = f'sqlite:///results/{args.study}_adaptive_distance.db' # pyabc.create_sqlite_db_id(file_="./adaptive_distance.db")
+    db_path = f'sqlite:///results/{args.study}_adaptive_distance.db'
 
     # load the data to be fitted
     # this should contain the output from stopsignalmetrics, including:
@@ -167,7 +162,8 @@ if __name__ == '__main__':
     # observed_data = {'mean_go_RT': 455.367, 'mean_stopfail_RT': 219.364, 'go_acc': .935}
 
     # load presp data from txt file
-    observed_presp = pd.read_csv(f'data/presp_by_ssd_{args.study}.txt',  delimiter=r"\s+", index_col=0)
+    observed_presp = pd.read_csv(f'data/presp_by_ssd_{args.study}.txt',
+                                 delimiter=r"\s+", index_col=0)
     for i, value in enumerate(observed_presp.presp.values):
         observed_data[f'presp_{i}'] = value
 
