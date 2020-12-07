@@ -23,12 +23,13 @@
 import pyabc
 import json
 from pyabc import (ABCSMC,
-                   RV, Distribution, Parameter)
+                   RV, Distribution)
 import numpy as np
 import os
 import pandas as pd
 import logging
 import argparse
+import tempfile
 
 from ssd import fixedSSD
 from stoptaskstudy import StopTaskStudy
@@ -46,6 +47,7 @@ def get_args():
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
     parser.add_argument('--p_guess_go', help='p_guess on go trials (default None)')
+    parser.add_argument('--test', help='use a test db file', action='store_true')
     parser.add_argument('--debug', help='turn on debugging output from ABC', action='store_true')
     parser.add_argument('--verbose', help='turn on verbose output', action='store_true')
     parser.add_argument('--stop_guess_ABCD', help='use SSD-dependent guessing based on ABCD data', action='store_true')
@@ -65,15 +67,18 @@ def cleanup_metrics(metrics):
     return(metrics)
 
 
-# create the main model function
-# takes in a dict of model parameters
-# returns a dict of peformance statistics
+def stopsignal_model_basic(parameters):
+    """wrapper for basic model
 
-def stopsignal_model(parameters):
-    
+    Args:
+        parameters (dict): parameters for model
+    """
+    # load full initial parameter set from file
+    paramfile = f'params/params_basic.json'
+    with open(paramfile) as f:
+        params = json.load(f)
 
-    # install the parameters from the simulation
-    # NOTE: params is a global variable, seems to be necessary here
+    # install ABCSMC parameters into full parameter set
     parameters['nondecision'] = int(parameters['nondecision'])
     params['mu']['go'] = parameters['mu_go']
     params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
@@ -82,6 +87,21 @@ def stopsignal_model(parameters):
                           'stop': parameters['noise_sd']}
     params['nondecision'] = {'go': parameters['nondecision'],
                              'stop': parameters['nondecision']}
+    return(_stopsignal_model(params))
+
+
+# create the main model function
+# takes in a dict of model parameters
+# returns a dict of peformance statistics
+def _stopsignal_model(params):
+    """[summary]
+
+    Args:
+        parameters (dict): model parameters from ABCSMC
+        params (dict): starting parameters loaded from file
+    """
+
+    # install the parameters from the simulation
     # TBD
     #    if args.p_guess_file is not None:
     #        p_guess = pd.read_csv(args.p_guess_file, index_col=0)
@@ -108,6 +128,7 @@ def stopsignal_model(parameters):
 
     return(results)
 
+
 def get_observed_data(args):
     # load the data to be fitted
     # this should contain the output from stopsignalmetrics, including:
@@ -124,6 +145,7 @@ def get_observed_data(args):
         observed_data[f'presp_{i}'] = value
     return(observed_data)
 
+
 if __name__ == '__main__':
     args = get_args()
     print(f'fitting stop task for {args.study}')
@@ -138,13 +160,6 @@ if __name__ == '__main__':
 
     max_populations = int(args.max_populations)
     min_epsilon = float(args.min_epsilon)
-
-    paramfile = f'params/params_{args.model}.json'
-    with open(paramfile) as f:
-        # YUCK! global variable used inside of model function
-        # because it's not clear how to pass additional args to function
-        # inside of sampler
-        params = json.load(f)
 
     if args.debug:
         df_logger = logging.getLogger('Distance')
@@ -170,11 +185,16 @@ if __name__ == '__main__':
 
     # set up the sampler
     # use acceptor which seems to improve performance with adaptive distance
-    abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive,
+    abc = ABCSMC(stopsignal_model_basic, parameter_prior, distance_adaptive,
                  acceptor=pyabc.UniformAcceptor(use_complete_history=True))
 
     # set up the database for the simulation
-    db_path = f'sqlite:///results/{args.study}_{args.model}_adaptive_distance.db'
+    if args.test:
+        print('Test mode: using temp database')
+        db_path = (
+            f"sqlite:///{os.path.join(tempfile.gettempdir(), 'test.db')}")
+    else:
+        db_path = f'sqlite:///results/{args.study}_{args.model}_adaptive_distance.db'
 
     observed_data = get_observed_data(args)
 
