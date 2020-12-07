@@ -7,7 +7,7 @@
 #SBATCH --mail-user=henrymj@stanford.edu
 #SBATCH -N 1 # number of nodes requested - set to ceil(n rows in command script / 24)
 #SBATCH -n 4 # total number of mpi tasks requested - set to n rows in command script
-#SBATCH -p normal
+#SBATCH -p russpold,normal
 # Job Submission
 #-----------
 export PYTHONPATH=""
