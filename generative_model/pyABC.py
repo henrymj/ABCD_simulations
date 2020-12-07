@@ -253,7 +253,7 @@ if __name__ == '__main__':
             f"sqlite:///{os.path.join(tempfile.gettempdir(), 'test.db')}")
     else:
         modelname = '_'.join(args.model)
-        db_path = f'sqlite:///results/{args.study}_{args.model}_adaptive_distance.db'
+        db_path = f'sqlite:///results/{args.study}_{modelname}_adaptive_distance.db'
 
     observed_data = get_observed_data(args)
 
