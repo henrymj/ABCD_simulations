@@ -89,6 +89,31 @@ def stopsignal_model_basic(parameters):
                              'stop': parameters['nondecision']}
     return(_stopsignal_model(params))
 
+def stopsignal_model_simpleguessing(parameters):
+    """wrapper for simple guessing model
+
+    Args:
+        parameters (dict): parameters for model
+    """
+    # load full initial parameter set from file
+    paramfile = f'params/params_simpleguessing.json'
+    with open(paramfile) as f:
+        params = json.load(f)
+
+    # install ABCSMC parameters into full parameter set
+    parameters['nondecision'] = int(parameters['nondecision'])
+    params['mu']['go'] = parameters['mu_go']
+    params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
+    params['mu_delta_incorrect'] = parameters['mu_delta_incorrect']
+    params['noise_sd'] = {'go': parameters['noise_sd'],
+                          'stop': parameters['noise_sd']}
+    params['nondecision'] = {'go': parameters['nondecision'],
+                             'stop': parameters['nondecision']}
+    params['p_guess'] = {'go': parameters['pguess'],
+                         'stop': parameters['pguess']}
+    print(params)
+    return(_stopsignal_model(params))
+
 
 # create the main model function
 # takes in a dict of model parameters
@@ -146,6 +171,26 @@ def get_observed_data(args):
     return(observed_data)
 
 
+def get_parameter_priors(model):
+    priors = None
+    if model == 'basic':
+        priors = Distribution(
+            mu_go=RV("uniform", .1, .5),
+            mu_stop_delta=RV("uniform", 0, 1),
+            mu_delta_incorrect=RV("uniform", 0, 0.2),
+            noise_sd=RV("uniform", 2, 5),
+            nondecision=RV("uniform", 25, 75))
+    elif model == 'simpleguessing':
+        priors = Distribution(
+            mu_go=RV("uniform", .1, .5),
+            mu_stop_delta=RV("uniform", 0, 1),
+            mu_delta_incorrect=RV("uniform", 0, 0.2),
+            noise_sd=RV("uniform", 2, 5),
+            nondecision=RV("uniform", 25, 75),
+            pguess=RV("uniform", 0., .5))
+    return(priors)
+
+
 if __name__ == '__main__':
     args = get_args()
     print(f'fitting stop task for {args.study}')
@@ -167,11 +212,7 @@ if __name__ == '__main__':
 
     # set up priors for ABC
     # these values are based on some hand-tweaking using the in-person dataset
-    parameter_prior = Distribution(mu_go=RV("uniform", .1, .5),
-                                   mu_stop_delta=RV("uniform", 0, 1),
-                                   mu_delta_incorrect=RV("uniform", 0, 0.2),
-                                   noise_sd=RV("uniform", 2, 5),
-                                   nondecision=RV("uniform", 25, 75))
+    parameter_prior = get_parameter_priors(args.model)
 
     if args.verbose:
         print(parameter_prior.get_parameter_names())
@@ -185,7 +226,12 @@ if __name__ == '__main__':
 
     # set up the sampler
     # use acceptor which seems to improve performance with adaptive distance
-    abc = ABCSMC(stopsignal_model_basic, parameter_prior, distance_adaptive,
+    stopsignal_model = {
+        'basic': stopsignal_model_basic,
+        'simpleguessing': stopsignal_model_simpleguessing
+    }
+
+    abc = ABCSMC(stopsignal_model[args.model], parameter_prior, distance_adaptive,
                  acceptor=pyabc.UniformAcceptor(use_complete_history=True))
 
     # set up the database for the simulation
