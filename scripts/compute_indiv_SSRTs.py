@@ -5,14 +5,15 @@ import json
 from os import path
 from glob import glob
 from simulate_individuals import generate_exgauss_sampler_from_fit,\
-                                 generate_exgauss_sampler_from_params
+                                 generate_exgauss_sampler_from_params,\
+                                 get_SSDs
 from stopsignalmetrics import SSRTmodel
 from utils import SimulateData
 
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_graded_go_trials', default=2000)
+    parser.add_argument('--n_graded_go_trials', default=5000)
     parser.add_argument('--subjects', nargs='+',
                         help='subjects to run simulations on', required=True)
     parser.add_argument('--abcd_dir', default='../abcd_data',
@@ -23,6 +24,16 @@ def get_args():
     parser.add_argument('--out_dir',
                         default='../ssrt_metrics/individual_metrics',
                         help='location to save simulated data')
+    parser.add_argument('--clip_SSDs_bool',
+                        default=True,
+                        help='clip fixed SSD design to clipped_SSD instead of max',
+                        type=bool)
+    parser.add_argument('--clipped_SSD',
+                        default=500,
+                        help='max SSD to use if dist is clipped')
+    parser.add_argument('--max_SSD',
+                        default=900,
+                        help='max SSD of the dataset')
     args = parser.parse_args()
     return(args)
 
@@ -61,6 +72,7 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
     curr_metrics = ssrtmodel.fit_transform(data)
     curr_info = [v for v in curr_metrics.values()] +\
                 [-np.inf, np.nan, np.nan]
+    info.append(curr_info)
 
     return pd.DataFrame(
         info,
@@ -132,28 +144,23 @@ if __name__ == '__main__':
     args = get_args()
 
     # GET ABCD INFO
-    # abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
     p_guess_df = pd.read_csv('%s/p_guess_per_ssd.csv' % args.abcd_dir)
 
     SSD_guess_dict = {float(col): float(p_guess_df[col].values[0]) for col
                       in p_guess_df.columns}
 
-    indiv_ssd_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir,
-                                  index_col=0)
+    # assigned mus
     with open('%s/assigned_mus.json' % args.abcd_dir) as json_file:
         mus_dict = json.load(json_file)
 
+    # exgaus sampler for guesses
     exgauss_param_path = '%s/exgauss_params.json' % args.abcd_dir
     with open(exgauss_param_path, 'r') as f:
         exgauss_params = json.load(f)
     sample_exgauss = generate_exgauss_sampler_from_params(exgauss_params)
 
-    # SSD0_RTs = abcd_data.query(
-    #     "SSDDur == 0.0 and correct_stop==0.0"
-    #     ).stop_rt_adjusted.values
-    # sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
-
     # CALCULATE SSRT
+    SSDs = get_SSDs(args)
     issue_subs = []
     for sub in args.subjects:
         try:
@@ -161,9 +168,8 @@ if __name__ == '__main__':
                 'mu_go': mus_dict[sub]['go'],
                 'mu_stop': mus_dict[sub]['stop']
             }
-            sub_SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
             graded_go_dict = {}
-            for SSD in sub_SSDs:
+            for SSD in SSDs:
                 graded_go_dict[SSD] = simulate_graded_RTs_and_sort(
                     args.n_graded_go_trials,
                     SSD,

@@ -48,16 +48,33 @@ def generate_exgauss_sampler_from_params(param_dict,
     return sample_exgauss
 
 
+def get_SSDs(args):
+    max_SSD = args.clipped_SSD if args.clip_SSDs_bool else args.max_SSD
+    return np.arange(0, max_SSD+50, 50)
+
+
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_trials', default=2000)
+    parser.add_argument('--n_trials_stop', default=2500)
+    parser.add_argument('--n_trials_go', default=5000)
     parser.add_argument('--subjects', nargs='+',
                         help='subjects to run simulations on', required=True)
-    parser.add_argument('--abcd_dir', default='../abcd_data',
+    parser.add_argument('--abcd_dir',
+                        default='../abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--out_dir',
                         default='../simulated_data/individual_data',
                         help='location to save simulated data')
+    parser.add_argument('--clip_SSDs_bool',
+                        default=True,
+                        help='clip fixed SSD design to clipped SSD instead of max',
+                        type=bool)
+    parser.add_argument('--max_SSD',
+                        default=900,
+                        help='max SSD of the dataset')
+    parser.add_argument('--clipped_SSD',
+                        default=500,
+                        help='max SSD to use if dist is clipped')
     args = parser.parse_args()
     return(args)
 
@@ -67,27 +84,21 @@ if __name__ == '__main__':
     args = get_args()
     print('analyzing ABCD info')
     # GET ABCD INFO
+    # p(guess | signal, SSD)
     p_guess_df = pd.read_csv('%s/p_guess_per_ssd.csv' % args.abcd_dir)
     p_guess_df.columns = p_guess_df.columns.astype(float)
 
+    # exgaus sampler for guesses
     exgauss_param_path = '%s/exgauss_params.json' % args.abcd_dir
     with open(exgauss_param_path, 'r') as f:
         exgauss_params = json.load(f)
     sample_exgauss = generate_exgauss_sampler_from_params(exgauss_params)
 
-    # abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
-    # SSD0_RTs = abcd_data.query(
-    #     "SSDDur == 0.0 and correct_stop==0.0"
-    #     ).stop_rt_adjusted.values
-    # sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
-
-    indiv_ssd_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir,
-                                  index_col=0)
+    # assigned mus
     with open('%s/assigned_mus.json' % args.abcd_dir) as json_file:
         mus_dict = json.load(json_file)
 
     # SETUP SIMULATORS
-
     simulator_dict = {
         'standard': SimulateData(),
         'guesses': SimulateData(guesses=True),
@@ -95,20 +106,20 @@ if __name__ == '__main__':
         'graded_both': SimulateData(grade_mu_go=True, grade_mu_stop=True),
     }
 
+    # set up shared params
+    SSDs = get_SSDs(args)
     params = {
-        'n_trials_stop': args.n_trials,
-        'n_trials_go': args.n_trials,
+        'n_trials_stop': args.n_trials_stop,
+        'n_trials_go': args.n_trials_go,
         'guess_function': sample_exgauss,
+        'SSDs': SSDs,
+        'p_guess_stop': list(p_guess_df[SSDs].values.astype(float)[0])
     }
 
     # SIMULATE INDIVIDUALS
     issue_subs = []
     for sub in args.subjects:
         try:
-            SSDs = indiv_ssd_dists.loc[sub, 'SSDDur'].unique()
-            params['SSDs'] = SSDs
-            params['p_guess_stop'] = list(p_guess_df[SSDs].values.astype(float)[0])
-
             params['mu_go'] = mus_dict[sub]['go']
             params['mu_stop'] = mus_dict[sub]['stop']
 
