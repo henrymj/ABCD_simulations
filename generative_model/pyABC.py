@@ -38,7 +38,7 @@ from stoptaskstudy import StopTaskStudy
 def get_args():
     parser = argparse.ArgumentParser(description='fit stop model params using ABC-SMC')
     parser.add_argument('--study', help='study label to define dataset to be fit')
-    parser.add_argument('--model', help='model label')
+    parser.add_argument('--model', nargs='+', help='model label(s)')
     parser.add_argument('--nthreads', help='max # of multiprocessing threads', default=8)
     parser.add_argument('--max_populations', help='max # of ABC populations', default=12)
     parser.add_argument('--min_epsilon', help='epsilon threshold for ABC', default=.1)
@@ -111,7 +111,6 @@ def stopsignal_model_simpleguessing(parameters):
                              'stop': parameters['nondecision']}
     params['p_guess'] = {'go': parameters['pguess'],
                          'stop': parameters['pguess']}
-    print(params)
     return(_stopsignal_model(params))
 
 
@@ -188,12 +187,21 @@ def get_parameter_priors(model):
             noise_sd=RV("uniform", 2, 5),
             nondecision=RV("uniform", 25, 75),
             pguess=RV("uniform", 0., .5))
+    else:
+        raise Exception(f'priors not defined for model {model}')
     return(priors)
 
 
 if __name__ == '__main__':
     args = get_args()
     print(f'fitting stop task for {args.study}')
+
+    stopsignal_model_func = {
+        'basic': stopsignal_model_basic,
+        'simpleguessing': stopsignal_model_simpleguessing
+    }
+    for model in args.model:
+        assert model in stopsignal_model_func
 
     if args.random_seed is not None:
         print('WARNING: Fixing random seed')
@@ -210,12 +218,19 @@ if __name__ == '__main__':
         df_logger = logging.getLogger('Distance')
         df_logger.setLevel(logging.DEBUG)
 
-    # set up priors for ABC
+    # set up priors amd models for ABC
     # these values are based on some hand-tweaking using the in-person dataset
-    parameter_prior = get_parameter_priors(args.model)
+    if len(args.model) > 1:
+        stopsignal_model = [stopsignal_model_func[x] for x in args.model]
+        parameter_prior = [get_parameter_priors(x) for x in args.model]
+    else:
+        stopsignal_model = stopsignal_model_func[args.model[0]]
+        parameter_prior = get_parameter_priors(args.model[0])
+
 
     if args.verbose:
-        print(parameter_prior.get_parameter_names())
+        print(stopsignal_model)
+        print(parameter_prior)
 
     # use an adaptive distance function
     # which deals with the fact that different outcome measures have
@@ -226,12 +241,9 @@ if __name__ == '__main__':
 
     # set up the sampler
     # use acceptor which seems to improve performance with adaptive distance
-    stopsignal_model = {
-        'basic': stopsignal_model_basic,
-        'simpleguessing': stopsignal_model_simpleguessing
-    }
 
-    abc = ABCSMC(stopsignal_model[args.model], parameter_prior, distance_adaptive,
+
+    abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive,
                  acceptor=pyabc.UniformAcceptor(use_complete_history=True))
 
     # set up the database for the simulation
@@ -240,6 +252,7 @@ if __name__ == '__main__':
         db_path = (
             f"sqlite:///{os.path.join(tempfile.gettempdir(), 'test.db')}")
     else:
+        modelname = '_'.join(args.model)
         db_path = f'sqlite:///results/{args.study}_{args.model}_adaptive_distance.db'
 
     observed_data = get_observed_data(args)
