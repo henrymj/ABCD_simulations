@@ -23,7 +23,7 @@
 import pyabc
 import json
 from pyabc import (ABCSMC,
-                   RV, Distribution)
+                   RV, Distribution, Parameter)
 import numpy as np
 import os
 import pandas as pd
@@ -37,6 +37,7 @@ from stoptaskstudy import StopTaskStudy
 def get_args():
     parser = argparse.ArgumentParser(description='fit stop model params using ABC-SMC')
     parser.add_argument('--study', help='study label to define dataset to be fit')
+    parser.add_argument('--model', help='model label')
     parser.add_argument('--nthreads', help='max # of multiprocessing threads', default=8)
     parser.add_argument('--max_populations', help='max # of ABC populations', default=12)
     parser.add_argument('--min_epsilon', help='epsilon threshold for ABC', default=.1)
@@ -69,11 +70,10 @@ def cleanup_metrics(metrics):
 # returns a dict of peformance statistics
 
 def stopsignal_model(parameters):
-    paramfile = 'params.json'
-    with open(paramfile) as f:
-        params = json.load(f)
+    
 
     # install the parameters from the simulation
+    # NOTE: params is a global variable, seems to be necessary here
     parameters['nondecision'] = int(parameters['nondecision'])
     params['mu']['go'] = parameters['mu_go']
     params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
@@ -108,6 +108,21 @@ def stopsignal_model(parameters):
 
     return(results)
 
+def get_observed_data(args):
+    # load the data to be fitted
+    # this should contain the output from stopsignalmetrics, including:
+    # {'mean_go_RT': , 'mean_stopfail_RT': , 'go_acc': }
+    with open(f'data/data_{args.study}.json') as f:
+        observed_data = json.load(f)
+
+    # observed_data = {'mean_go_RT': 455.367, 'mean_stopfail_RT': 219.364, 'go_acc': .935}
+
+    # load presp data from txt file
+    observed_presp = pd.read_csv(f'data/presp_by_ssd_{args.study}.txt',
+                                 delimiter=r"\s+", index_col=0)
+    for i, value in enumerate(observed_presp.presp.values):
+        observed_data[f'presp_{i}'] = value
+    return(observed_data)
 
 if __name__ == '__main__':
     args = get_args()
@@ -124,6 +139,13 @@ if __name__ == '__main__':
     max_populations = int(args.max_populations)
     min_epsilon = float(args.min_epsilon)
 
+    paramfile = f'params/params_{args.model}.json'
+    with open(paramfile) as f:
+        # YUCK! global variable used inside of model function
+        # because it's not clear how to pass additional args to function
+        # inside of sampler
+        params = json.load(f)
+
     if args.debug:
         df_logger = logging.getLogger('Distance')
         df_logger.setLevel(logging.DEBUG)
@@ -136,7 +158,8 @@ if __name__ == '__main__':
                                    noise_sd=RV("uniform", 2, 5),
                                    nondecision=RV("uniform", 25, 75))
 
-    parameter_prior.get_parameter_names()
+    if args.verbose:
+        print(parameter_prior.get_parameter_names())
 
     # use an adaptive distance function
     # which deals with the fact that different outcome measures have
@@ -151,21 +174,9 @@ if __name__ == '__main__':
                  acceptor=pyabc.UniformAcceptor(use_complete_history=True))
 
     # set up the database for the simulation
-    db_path = f'sqlite:///results/{args.study}_adaptive_distance.db'
+    db_path = f'sqlite:///results/{args.study}_{args.model}_adaptive_distance.db'
 
-    # load the data to be fitted
-    # this should contain the output from stopsignalmetrics, including:
-    # {'mean_go_RT': , 'mean_stopfail_RT': , 'go_acc': }
-    with open(f'data/data_{args.study}.json') as f:
-        observed_data = json.load(f)
-
-    # observed_data = {'mean_go_RT': 455.367, 'mean_stopfail_RT': 219.364, 'go_acc': .935}
-
-    # load presp data from txt file
-    observed_presp = pd.read_csv(f'data/presp_by_ssd_{args.study}.txt',
-                                 delimiter=r"\s+", index_col=0)
-    for i, value in enumerate(observed_presp.presp.values):
-        observed_data[f'presp_{i}'] = value
+    observed_data = get_observed_data(args)
 
     # initiatize database and add observed data
     abc.new(db_path, observed_data)
