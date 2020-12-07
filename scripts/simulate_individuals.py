@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import argparse
 import scipy.stats as sstats
+from scipy.stats import exponnorm
 from utils import SimulateData
 
 
@@ -23,6 +24,24 @@ def generate_exgauss_sampler_from_fit(data,
                                           beta=beta,
                                           scale=scale,
                                           loc=loc)
+            n_negatives = np.sum(out < 0)
+        return out
+
+    return sample_exgauss
+
+
+def generate_exgauss_sampler_from_params(param_dict,
+                                         default_size=100000):
+    def sample_exgauss(size=default_size,
+                       param_dict=param_dict):
+        out = exponnorm.rvs(param_dict['K'],
+                            param_dict['loc'],
+                            param_dict['scale'],
+                            size=size)
+        n_negatives = np.sum(out < 0)
+        while n_negatives > 0:
+            out[out < 0] = sample_exgauss(n_negatives,
+                                          param_dict=param_dict)
             n_negatives = np.sum(out < 0)
         return out
 
@@ -51,11 +70,16 @@ if __name__ == '__main__':
     p_guess_df = pd.read_csv('%s/p_guess_per_ssd.csv' % args.abcd_dir)
     p_guess_df.columns = p_guess_df.columns.astype(float)
 
-    abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
-    SSD0_RTs = abcd_data.query(
-        "SSDDur == 0.0 and correct_stop==0.0"
-        ).stop_rt_adjusted.values
-    sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
+    exgauss_param_path = '%s/exgauss_params.json' % args.abcd_dir
+    with open(exgauss_param_path, 'r') as f:
+        exgauss_params = json.load(f)
+    sample_exgauss = generate_exgauss_sampler_from_params(exgauss_params)
+
+    # abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
+    # SSD0_RTs = abcd_data.query(
+    #     "SSDDur == 0.0 and correct_stop==0.0"
+    #     ).stop_rt_adjusted.values
+    # sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
     indiv_ssd_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir,
                                   index_col=0)

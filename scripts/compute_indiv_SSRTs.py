@@ -4,7 +4,8 @@ import argparse
 import json
 from os import path
 from glob import glob
-from simulate_individuals import generate_exgauss_sampler_from_fit
+from simulate_individuals import generate_exgauss_sampler_from_fit,\
+                                 generate_exgauss_sampler_from_params
 from stopsignalmetrics import SSRTmodel
 from utils import SimulateData
 
@@ -36,7 +37,7 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
     for SSD in SSDs:
         curr_df = data.query(
             "condition=='go' | (condition=='stop' and SSD == %s)" % SSD
-            ).copy()
+            )
         curr_metrics = ssrtmodel.fit_transform(curr_df)
         if (curr_metrics['p_respond'] == 0) | (curr_metrics['p_respond'] == 1):
             curr_info = [v for v in curr_metrics.values()] +\
@@ -54,8 +55,12 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
             curr_info = [v for v in curr_metrics.values()] +\
                         [SSD, SSRT_w_guesses, SSRT_w_graded]
         info.append(curr_info)
-        cols = [k for k in curr_metrics.keys()] +\
-               ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
+    cols = [k for k in curr_metrics.keys()] +\
+           ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
+    # get for metrics using whole simulated data
+    curr_metrics = ssrtmodel.fit_transform(data)
+    curr_info = [v for v in curr_metrics.values()] +\
+                [-np.inf, np.nan, np.nan]
 
     return pd.DataFrame(
         info,
@@ -127,7 +132,7 @@ if __name__ == '__main__':
     args = get_args()
 
     # GET ABCD INFO
-    abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
+    # abcd_data = pd.read_csv('%s/minimal_abcd_clean.csv' % args.abcd_dir)
     p_guess_df = pd.read_csv('%s/p_guess_per_ssd.csv' % args.abcd_dir)
 
     SSD_guess_dict = {float(col): float(p_guess_df[col].values[0]) for col
@@ -138,10 +143,15 @@ if __name__ == '__main__':
     with open('%s/assigned_mus.json' % args.abcd_dir) as json_file:
         mus_dict = json.load(json_file)
 
-    SSD0_RTs = abcd_data.query(
-        "SSDDur == 0.0 and correct_stop==0.0"
-        ).stop_rt_adjusted.values
-    sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
+    exgauss_param_path = '%s/exgauss_params.json' % args.abcd_dir
+    with open(exgauss_param_path, 'r') as f:
+        exgauss_params = json.load(f)
+    sample_exgauss = generate_exgauss_sampler_from_params(exgauss_params)
+
+    # SSD0_RTs = abcd_data.query(
+    #     "SSDDur == 0.0 and correct_stop==0.0"
+    #     ).stop_rt_adjusted.values
+    # sample_exgauss = generate_exgauss_sampler_from_fit(SSD0_RTs)
 
     # CALCULATE SSRT
     issue_subs = []
