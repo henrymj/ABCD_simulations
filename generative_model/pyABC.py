@@ -103,6 +103,31 @@ def stopsignal_model_basic(parameters):
     params = setup_ssd_params(params)
     return(_stopsignal_model(params))
 
+def stopsignal_model_scaledguessing(parameters):
+    """wrapper for scaled guessing model using ABCD estimates
+
+    Args:
+        parameters (dict): parameters for model
+    """
+    # load full initial parameter set from file
+    paramfile = f'params/params_simpleguessing.json'
+    with open(paramfile) as f:
+        params = json.load(f)
+
+    # install ABCSMC parameters into full parameter set
+    parameters['nondecision'] = int(parameters['nondecision'])
+    params['mu']['go'] = parameters['mu_go']
+    params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
+    params['mu_delta_incorrect'] = parameters['mu_delta_incorrect']
+    params['noise_sd'] = {'go': parameters['noise_sd'],
+                          'stop': parameters['noise_sd']}
+    params['nondecision'] = {'go': parameters['nondecision'],
+                             'stop': parameters['nondecision']}
+    params['p_guess'] = {'go': parameters['pguess'],
+                         'stop': 'ABCD'}
+    params = setup_ssd_params(params)
+    return(_stopsignal_model(params))
+
 
 def stopsignal_model_simpleguessing(parameters):
     """wrapper for simple guessing model
@@ -147,8 +172,10 @@ def _stopsignal_model(params):
     #        p_guess = pd.read_csv(args.p_guess_file, index_col=0)
     #        assert 'SSD' in p_guess.columns and 'p_guess' in p_guess.columns
 
-    min_ssd, max_ssd, ssd_step = 0, 550, 50
-    ssd = fixedSSD(np.arange(min_ssd, max_ssd + ssd_step, ssd_step))
+    ssd = fixedSSD(
+        np.arange(params['min_ssd'], 
+                  params['max_ssd'] + 1,  # add 1 to include max
+                  params['ssd_step']))
 
     study = StopTaskStudy(ssd, None, params=params)
 
@@ -196,7 +223,7 @@ def get_parameter_priors(model):
             mu_delta_incorrect=RV("uniform", 0, 0.2),
             noise_sd=RV("uniform", 2, 5),
             nondecision=RV("uniform", 25, 75))
-    elif model == 'simpleguessing':
+    elif model in ['simpleguessing', 'scaledguessing']:
         priors = Distribution(
             mu_go=RV("uniform", .1, .5),
             mu_stop_delta=RV("uniform", 0, 1),
@@ -215,7 +242,8 @@ if __name__ == '__main__':
 
     stopsignal_model_func = {
         'basic': stopsignal_model_basic,
-        'simpleguessing': stopsignal_model_simpleguessing
+        'simpleguessing': stopsignal_model_simpleguessing,
+        'scaledguessing': stopsignal_model_scaledguessing
     }
     for model in args.model:
         assert model in stopsignal_model_func
