@@ -25,7 +25,7 @@ def init_default_params():
             'noise_sd': {'go': 2.2, 'stop': 2.2},
             'threshold': 100,
             'ntrials': {'go': 10000, 'stop': 2000},
-            'graded_mu_go': False,
+            'graded_mu_go': None,
             'p_guess': {'go': None, 'stop': None},
             'exgauss_params': {'K': 2.2642549666245166,
                                'loc': 196.16188286978473,
