@@ -81,7 +81,7 @@ def setup_ssd_params(params):
 
 
 def stopsignal_model_gradedmugo(parameters):
-    """wrapper for basic model
+    """wrapper for graded mu go model
 
     Args:
         parameters (dict): parameters for model
@@ -135,6 +135,31 @@ def stopsignal_model_scaledguessing(parameters):
     """
     # load full initial parameter set from file
     paramfile = f'params/params_simpleguessing.json'
+    with open(paramfile) as f:
+        params = json.load(f)
+
+    # install ABCSMC parameters into full parameter set
+    parameters['nondecision'] = int(parameters['nondecision'])
+    params['mu']['go'] = parameters['mu_go']
+    params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
+    params['mu_delta_incorrect'] = parameters['mu_delta_incorrect']
+    params['noise_sd'] = {'go': parameters['noise_sd'],
+                          'stop': parameters['noise_sd']}
+    params['nondecision'] = {'go': parameters['nondecision'],
+                             'stop': parameters['nondecision']}
+    params['p_guess'] = {'go': parameters['pguess'],
+                         'stop': 'ABCD'}
+    params = setup_ssd_params(params)
+    return(_stopsignal_model(params))
+
+def stopsignal_model_fullabcd(parameters):
+    """wrapper for scaled guessing model + grade mu go using ABCD estimates
+
+    Args:
+        parameters (dict): parameters for model
+    """
+    # load full initial parameter set from file
+    paramfile = f'params/params_fullabcd.json'
     with open(paramfile) as f:
         params = json.load(f)
 
@@ -247,7 +272,7 @@ def get_parameter_priors(model):
             mu_delta_incorrect=RV("uniform", 0, 0.2),
             noise_sd=RV("uniform", 2, 5),
             nondecision=RV("uniform", 25, 75))
-    elif model in ['simpleguessing', 'scaledguessing']:
+    elif model in ['simpleguessing', 'scaledguessing', 'fullabcd']:
         priors = Distribution(
             mu_go=RV("uniform", .1, .5),
             mu_stop_delta=RV("uniform", 0, 1),
@@ -268,7 +293,8 @@ if __name__ == '__main__':
         'basic': stopsignal_model_basic,
         'simpleguessing': stopsignal_model_simpleguessing,
         'scaledguessing': stopsignal_model_scaledguessing,
-        'gradedmugo': stopsignal_model_gradedmugo
+        'gradedmugo': stopsignal_model_gradedmugo,
+        'fullabcd': stopsignal_model_fullabcd
     }
     for model in args.model:
         assert model in stopsignal_model_func
