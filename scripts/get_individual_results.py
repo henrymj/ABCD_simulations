@@ -139,12 +139,11 @@ if __name__ == '__main__':
         ABCD_SSD_dists = pd.read_csv(ssd_dist_path,
                                      index_col=0)
 
+        print('Running the Dask Computation...')
         expected_ssrts = ssrt_metrics.compute().groupby(
             ['NARGUID', 'underlying distribution']
             ).apply(lambda x: weight_ssrts(x, ABCD_SSD_dists))
 
-        print('Running the Dask Computation...')
-        expected_ssrts = expected_ssrts.compute()
         expected_ssrts = expected_ssrts.reset_index()
         expected_ssrts
 
