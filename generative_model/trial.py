@@ -56,22 +56,22 @@ def sample_guess_rt(exgauss_params):
                       exgauss_params['scale']))
 
 
-def p_guess_by_ssd(SSD, paramset=None, params=None):
+def p_guess_by_ssd(SSD, paramset='ABCD', exgaussparams=None):
     # use data from ABCD to compute p guess per ssd
     # using 2nd order polynomial function relating
     # SSD to p guess
     # see pguess_curve_fit.ipynb for fitting of these params
 
     if paramset == 'ABCD':
-        params = [-4.26213331e-03, 4.51459691e-06, 1.01061072e+00]
+        exgaussparams = [-4.26213331e-03, 4.51459691e-06, 1.01061072e+00]
 
-    if params is None:
+    if exgaussparams is None:
         raise Exception('either params or paramset must be specified')
 
     def polyfunc(x, a, b, c):
         return a * x + b * x**2 + c
 
-    pguess = polyfunc(SSD, *params)
+    pguess = polyfunc(SSD, *exgaussparams)
     return(np.clip(pguess, 0, 1))
 
 
@@ -110,7 +110,7 @@ class Trial:
                     p_fast_guess = None
                 elif isinstance(trial_params['p_guess']['stop'], str):
                     p_fast_guess = p_guess_by_ssd(
-                        self.SSD, trial_params['p_guess']['stop'])
+                        self.SSD, paramset=trial_params['p_guess']['stop'])
                 else:
                     p_fast_guess = trial_params['p_guess']['stop']
 
