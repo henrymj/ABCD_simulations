@@ -37,8 +37,8 @@ from stoptaskstudy import StopTaskStudy
 
 def get_args():
     parser = argparse.ArgumentParser(description='fit stop model params using ABC-SMC')
-    parser.add_argument('--study', help='study label to define dataset to be fit')
-    parser.add_argument('--model', nargs='+', help='model label(s)')
+    parser.add_argument('--study', help='study label to define dataset to be fit', required=True)
+    parser.add_argument('--model', nargs='+', help='model label(s)', required=True)
     parser.add_argument('--nthreads', help='max # of multiprocessing threads', default=8)
     parser.add_argument('--max_populations', help='max # of ABC populations', default=12)
     parser.add_argument('--min_epsilon', help='epsilon threshold for ABC', default=.1)
@@ -48,6 +48,8 @@ def get_args():
     parser.add_argument('--random_seed', help='random seed', type=int)
     parser.add_argument('--p_guess_go', help='p_guess on go trials (default None)')
     parser.add_argument('--test', help='use a test db file', action='store_true')
+    parser.add_argument('--fixed_distance', help='use fixed rather than adaptive distance', 
+                        action='store_true')
     parser.add_argument('--debug', help='turn on debugging output from ABC', action='store_true')
     parser.add_argument('--verbose', help='turn on verbose output', action='store_true')
     parser.add_argument('--stop_guess_ABCD', help='use SSD-dependent guessing based on ABCD data', action='store_true')
@@ -65,6 +67,17 @@ def cleanup_metrics(metrics):
         metrics['SSRT_' + k] = metrics['SSRT'][k]
     del metrics['SSRT']
     return(metrics)
+
+
+def setup_ssd_params(params):
+    # set default params if not present
+    if 'min_ssd' not in params:
+        params['min_ssd'] = 0
+    if 'max_ssd' not in params:
+        params['max_ssd'] = 550
+    if 'ssd_step' not in params:
+        params['ssd_step'] = 50
+    return(params)
 
 
 def stopsignal_model_basic(parameters):
@@ -87,7 +100,9 @@ def stopsignal_model_basic(parameters):
                           'stop': parameters['noise_sd']}
     params['nondecision'] = {'go': parameters['nondecision'],
                              'stop': parameters['nondecision']}
+    params = setup_ssd_params(params)
     return(_stopsignal_model(params))
+
 
 def stopsignal_model_simpleguessing(parameters):
     """wrapper for simple guessing model
@@ -111,6 +126,7 @@ def stopsignal_model_simpleguessing(parameters):
                              'stop': parameters['nondecision']}
     params['p_guess'] = {'go': parameters['pguess'],
                          'stop': parameters['pguess']}
+    params = setup_ssd_params(params)
     return(_stopsignal_model(params))
 
 
@@ -160,11 +176,12 @@ def get_observed_data(args):
     with open(f'data/data_{args.study}.json') as f:
         observed_data = json.load(f)
 
-    # observed_data = {'mean_go_RT': 455.367, 'mean_stopfail_RT': 219.364, 'go_acc': .935}
-
     # load presp data from txt file
     observed_presp = pd.read_csv(f'data/presp_by_ssd_{args.study}.txt',
                                  delimiter=r"\s+", index_col=0)
+    assert 'presp' in observed_presp.columns and observed_presp.index.name == 'SSD', 'presp file must include column presp and SSD as index'
+    observed_presp = observed_presp[observed_presp.index <= args.max_ssd]
+    observed_presp = observed_presp[observed_presp.index >= args.min_ssd]
     for i, value in enumerate(observed_presp.presp.values):
         observed_data[f'presp_{i}'] = value
     return(observed_data)
@@ -236,14 +253,17 @@ if __name__ == '__main__':
     # which deals with the fact that different outcome measures have
     # different scales - automatically scales to them
 
-    distance_adaptive = pyabc.AdaptivePNormDistance(
-        p=2, scale_function=pyabc.distance.root_mean_square_deviation)
+    if args.fixed_distance:
+        distance = pyabc.PNormDistance(p=2)
+    else:
+        distance = pyabc.AdaptivePNormDistance(
+            p=2, scale_function=pyabc.distance.root_mean_square_deviation)
 
     # set up the sampler
     # use acceptor which seems to improve performance with adaptive distance
 
 
-    abc = ABCSMC(stopsignal_model, parameter_prior, distance_adaptive,
+    abc = ABCSMC(stopsignal_model, parameter_prior, distance,
                  acceptor=pyabc.UniformAcceptor(use_complete_history=True))
 
     # set up the database for the simulation
@@ -253,7 +273,8 @@ if __name__ == '__main__':
             f"sqlite:///{os.path.join(tempfile.gettempdir(), 'test.db')}")
     else:
         modelname = '_'.join(args.model)
-        db_path = f'sqlite:///results/{args.study}_{modelname}_adaptive_distance.db'
+        distance_string = 'fixed_distance' if args.fixed_distance else 'adaptive_distance'
+        db_path = f'sqlite:///results/{args.study}_{modelname}_{distance_string}.db'
 
     observed_data = get_observed_data(args)
 
@@ -262,6 +283,6 @@ if __name__ == '__main__':
 
     # %%
     # run the model
-    history = abc.run(
+    sampler_history = abc.run(
         minimum_epsilon=min_epsilon,
         max_nr_populations=max_populations,)
