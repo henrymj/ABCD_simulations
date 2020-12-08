@@ -104,7 +104,7 @@ def simulate_graded_RTs_and_sort(n_trials, SSD, sub_params=None):
     sub_params = sub_params if sub_params else {}
     simulator = SimulateData()
     params = simulator._init_params(sub_params)
-    params['n_trials_stop'] = n_trials
+    params['n_trials_stop'] = 0
     params['n_trials_go'] = n_trials
 
     params['mu_go'] = simulator._log_grade_mu(params['mu_go'], SSD)
@@ -113,7 +113,8 @@ def simulate_graded_RTs_and_sort(n_trials, SSD, sub_params=None):
 
     data_dict = simulator._simulate_go_trials(simulator._init_data_dict(),
                                               params)
-    goRTs = data_dict['RT'].copy()
+    # copy, drop nans, sort
+    goRTs = [rt for rt in data_dict['RT'] if rt == rt]
     goRTs.sort()
     return goRTs
 
