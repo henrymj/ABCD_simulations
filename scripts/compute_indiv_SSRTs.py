@@ -107,7 +107,7 @@ def simulate_graded_RTs_and_sort(n_trials, SSD, sub_params=None):
     params['n_trials_stop'] = 0
     params['n_trials_go'] = n_trials
 
-    params['mu_go'] = simulator._log_grade_mu(params['mu_go'], SSD)
+    params['mu_go'] = simulator._log_grade_mu(params['mu_go_base'], SSD)
     simulator._set_n_trials(params)
     simulator._set_n_guesses(params)  # no guessing is happening
 
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     for sub in args.subjects:
         try:
             params = {
-                'mu_go': mus_dict[sub]['go'],
+                'mu_go_base': mus_dict[sub]['go'],
                 'mu_stop': mus_dict[sub]['stop']
             }
             graded_go_dict = {}
