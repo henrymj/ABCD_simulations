@@ -43,6 +43,9 @@ class SimulateData():
         start_time = int(start_time)
         accum = np.zeros(trial['max_time'])
         accum_period = trial['max_time'] - start_time
+        print(start_time)
+        print(trial['max_time'])
+        print(accum_period)
         drift = np.ones(accum_period) * mu
         noise = np.random.randn(accum_period) * noise_sd
         accum[start_time:trial['max_time']] = np.cumsum(drift + noise)
@@ -290,7 +293,7 @@ class SimulateData():
     #     return self._at_least_0((SSD/max_SSD) * mu_go)
 
     def _init_params(self, params=None):
-        params = params if params else {}
+        params = params.copy() if params else {}
         # TODO: move default dict to json, read in
         default_dict = {'mu_go': .2,
                         'mu_stop': .4,

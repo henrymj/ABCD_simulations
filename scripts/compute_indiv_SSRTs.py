@@ -101,7 +101,7 @@ def add_guess_RTs_and_sort(goRTs, SSD, SSD_guess_dict, guess_sampler):
 
 
 def simulate_graded_RTs_and_sort(n_trials, SSD, sub_params=None):
-    sub_params = sub_params if sub_params else {}
+    sub_params = sub_params.copy() if sub_params else {}
     simulator = SimulateData()
     params = simulator._init_params(sub_params)
     params['n_trials_stop'] = 0
