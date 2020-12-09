@@ -43,9 +43,6 @@ class SimulateData():
         start_time = int(start_time)
         accum = np.zeros(trial['max_time'])
         accum_period = trial['max_time'] - start_time
-        print(start_time)
-        print(trial['max_time'])
-        print(accum_period)
         drift = np.ones(accum_period) * mu
         noise = np.random.randn(accum_period) * noise_sd
         accum[start_time:trial['max_time']] = np.cumsum(drift + noise)
