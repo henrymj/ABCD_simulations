@@ -68,8 +68,9 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
         info.append(curr_info)
     cols = [k for k in curr_metrics.keys()] +\
            ['SSD', 'SSRT_w_guesses', 'SSRT_w_graded']
-    # get for metrics using whole simulated data
-    curr_metrics = ssrtmodel.fit_transform(data)
+    # get for metrics using "whole" simulated data
+    curr_data = data.loc[data.SSD.isin(np.arange(50, 300, 50)) | (data.condition=='go')]
+    curr_metrics = ssrtmodel.fit_transform(curr_data)
     curr_info = [v for v in curr_metrics.values()] +\
                 [-np.inf, np.nan, np.nan]
     info.append(curr_info)
