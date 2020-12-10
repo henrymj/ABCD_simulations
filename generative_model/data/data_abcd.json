@@ -1,7 +1,5 @@
 {
     "mean_go_RT": 545.74,
     "mean_stopfail_RT": 462.938,
-    "go_acc": 0.919,
-    "sd_stopfail_RT": 155.122888,
-    "sd_go_RT": 190.272261
+    "go_acc": 0.919
 }
