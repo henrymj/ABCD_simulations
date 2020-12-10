@@ -25,13 +25,20 @@ def get_args():
     parser.add_argument('--fig_dir',
                         default='../figures',
                         help='location to save simulated data')
+    parser.add_argument('--clip_SSDs_bool',
+                        default=True,
+                        help='clip fixed SSD design to clipped_SSD instead of max',
+                        type=bool)
+    parser.add_argument('--clipped_SSD',
+                        default=500,
+                        help='max SSD to use if dist is clipped')
     args = parser.parse_args()
     return(args)
 
 
 def weight_ssrts(sub_df, ABCD_SSD_dists):
     sub_df = sub_df.copy()
-    indiv_SSRT = np.zeros((1, 4))
+    indiv_SSRT = np.zeros((1, 5))
     sub = sub_df['NARGUID'].unique()[0]
     sub_dists = ABCD_SSD_dists.query("NARGUID=='%s'" % sub)
     for SSD in sub_dists.SSDDur:
@@ -39,9 +46,10 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
                                ['standard', 'guesses', 'graded_go', 'graded_both']
                                ].values[0]
         weight = sub_dists.loc[sub_dists.SSDDur == SSD, 'proportion'].values
-        indiv_SSRT += ssd_SSRTs * weight
+        indiv_SSRT[0][:4] += ssd_SSRTs * weight
+    indiv_SSRT[0][4] = sub_df.loc[sub_df.SSD == -np.inf, 'standard'].values[0]
     return pd.DataFrame(indiv_SSRT,
-                        columns=['standard', 'guesses', 'graded_go', 'graded_both'])
+                        columns=['standard', 'guesses', 'graded_go', 'graded_both', 'fixed'])
 
 
 # In[3]:
@@ -57,11 +65,6 @@ if __name__ == '__main__':
         lambda x: x.split('_')[-1].replace('.csv', ''), meta=str)
     ssrt_metrics['underlying distribution'] = ssrt_metrics['filename'].apply(
         lambda x: '_'.join(x.split('/')[-1].split('_')[:-1]), meta=str)
-    # ssrt_metrics['underlying distribution'] = ssrt_metrics[
-    #     'underlying distribution'
-    #     ].map({'graded': 'graded_mu_go',
-    #            'standard': 'standard',
-    #            'guesses': 'guesses'})
     ssrt_metrics = ssrt_metrics.drop('filename', axis=1)
     ssrt_metrics['graded_both'] = ssrt_metrics['SSRT_w_graded']
     ssrt_metrics = ssrt_metrics.rename(
@@ -128,21 +131,26 @@ if __name__ == '__main__':
 
     if args.job in ['calc_ssrts', 'all']:
         print('Calculating Expected SSRTs...')
-        ABCD_SSD_dists = pd.read_csv('%s/SSD_dist_by_subj.csv' % args.abcd_dir)
 
-        expected_ssrts = ssrt_metrics.groupby(
+        # SSD distributions for individuals
+        ssd_dist_path = '%s/SSD_dist_by_subj_%sClip-%s.csv' % (args.abcd_dir,
+                                                               args.clipped_SSD,
+                                                               args.clip_SSDs_bool)
+        ABCD_SSD_dists = pd.read_csv(ssd_dist_path,
+                                     index_col=0)
+
+        print('Running the Dask Computation...')
+        expected_ssrts = ssrt_metrics.compute().groupby(
             ['NARGUID', 'underlying distribution']
             ).apply(lambda x: weight_ssrts(x, ABCD_SSD_dists))
 
-        print('Running the Dask Computation...')
-        expected_ssrts = expected_ssrts.compute()
         expected_ssrts = expected_ssrts.reset_index()
         expected_ssrts
 
         pivot_ssrts = expected_ssrts.pivot(
             index='NARGUID',
             columns='underlying distribution',
-            values=['standard', 'guesses', 'graded_go', 'graded_both']
+            values=['standard', 'guesses', 'graded_go', 'graded_both', 'fixed']
             )
 
         print('Saving expected SSRTs')
