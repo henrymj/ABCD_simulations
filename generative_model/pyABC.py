@@ -43,12 +43,13 @@ def get_args():
     parser.add_argument('--max_populations', help='max # of ABC populations', default=12)
     parser.add_argument('--min_epsilon', help='epsilon threshold for ABC', default=.1)
     parser.add_argument('--min_ssd', help='minimum SSD value', default=0)
-    parser.add_argument('--max_ssd', help='maximum SSD value', default=550)
+    parser.add_argument('--max_ssd', help='maximum SSD value', default=500)
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
     parser.add_argument('--p_guess_go', help='p_guess on go trials (default None)')
     parser.add_argument('--test', help='use a test db file', action='store_true')
-    parser.add_argument('--fixed_distance', help='use fixed rather than adaptive distance', 
+    parser.add_argument('--setuponly', help='do not run estimation', action='store_true')
+    parser.add_argument('--fixed_distance', help='use fixed rather than adaptive distance',
                         action='store_true')
     parser.add_argument('--debug', help='turn on debugging output from ABC', action='store_true')
     parser.add_argument('--verbose', help='turn on verbose output', action='store_true')
@@ -56,7 +57,7 @@ def get_args():
 
     parser.add_argument('--guess_param_file', default='exgauss_params.json',
                         help='file with exgauss params for guesses')
-    # parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
+    parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
     return parser.parse_args()
 
 
@@ -74,7 +75,7 @@ def setup_ssd_params(params):
     if 'min_ssd' not in params:
         params['min_ssd'] = 0
     if 'max_ssd' not in params:
-        params['max_ssd'] = 550
+        params['max_ssd'] = 500
     if 'ssd_step' not in params:
         params['ssd_step'] = 50
     return(params)
@@ -127,6 +128,7 @@ def stopsignal_model_basic(parameters):
     params = setup_ssd_params(params)
     return(_stopsignal_model(params))
 
+
 def stopsignal_model_scaledguessing(parameters):
     """wrapper for scaled guessing model using ABCD estimates
 
@@ -151,6 +153,7 @@ def stopsignal_model_scaledguessing(parameters):
                          'stop': 'ABCD'}
     params = setup_ssd_params(params)
     return(_stopsignal_model(params))
+
 
 def stopsignal_model_fullabcd(parameters):
     """wrapper for scaled guessing model + grade mu go using ABCD estimates
@@ -222,26 +225,33 @@ def _stopsignal_model(params):
     #        assert 'SSD' in p_guess.columns and 'p_guess' in p_guess.columns
 
     ssd = fixedSSD(
-        np.arange(params['min_ssd'], 
+        np.arange(params['min_ssd'],
                   params['max_ssd'] + 1,  # add 1 to include max
                   params['ssd_step']))
 
     study = StopTaskStudy(ssd, None, params=params)
 
     trialdata = study.run()
+    trialdata['correct'] = trialdata.correct.astype(float)
     metrics = study.get_stopsignal_metrics()
     # summarize data - go trials are labeled with SSD of -inf so that
     # they get included in the summary
-    stop_data = trialdata.groupby('SSD').mean().query('SSD >= 0').resp.values
+    presp_by_ssd = trialdata.groupby('SSD').mean().query('SSD >= 0').resp.values
     results = {}
 
     metrics = cleanup_metrics(metrics)
-    for k in ['mean_go_RT', 'mean_stopfail_RT', 'go_acc']:
+    for k in ['mean_go_RT', 'mean_stopfail_RT', 'go_acc', 'sd_go_RT', 'sd_stopfail_RT']:
         results.update({k: metrics[k]})
     # need to separate presp values since distance fn can't take a vector
-    for i, value in enumerate(stop_data):
-        results[f'presp_{i}'] = value
+    for i, value in enumerate(presp_by_ssd):
+        # occasionally there will be no trials for a particular SSD which gives NaN
+        # we replace that with zero
+        results[f'presp_{i}'] = 0 if np.isnan(value) else value
 
+    for i, SSD in enumerate(trialdata.query('SSD >= 0').SSD.sort_values().unique()):
+        accdata_for_ssd = trialdata.query(f'SSD == {SSD}').dropna()
+        value = accdata_for_ssd.correct.dropna().mean()
+        results[f'accuracy_{i}'] = 0 if np.isnan(value) else value
     return(results)
 
 
@@ -260,6 +270,16 @@ def get_observed_data(args):
     observed_presp = observed_presp[observed_presp.index >= args.min_ssd]
     for i, value in enumerate(observed_presp.presp.values):
         observed_data[f'presp_{i}'] = value
+
+    # load presp data from txt file
+    observed_accuracy = pd.read_csv(f'data/accuracy_by_ssd_{args.study}.txt',
+                                    delimiter=r"\s+", index_col=0)
+    assert 'accuracy' in observed_accuracy.columns and observed_accuracy.index.name == 'SSD', 'accuracy file must include column accuuracy and SSD as index'
+    observed_accuracy = observed_accuracy[observed_accuracy.index <= args.max_ssd]
+    observed_accuracy = observed_accuracy[observed_accuracy.index >= args.min_ssd]
+    for i, value in enumerate(observed_accuracy.accuracy.values):
+        observed_data[f'accuracy_{i}'] = value if value is not None else 0
+
     return(observed_data)
 
 
@@ -323,10 +343,11 @@ if __name__ == '__main__':
         stopsignal_model = stopsignal_model_func[args.model[0]]
         parameter_prior = get_parameter_priors(args.model[0])
 
-
     if args.verbose:
         print(stopsignal_model)
         print(parameter_prior)
+
+    observed_data = get_observed_data(args)
 
     # use an adaptive distance function
     # which deals with the fact that different outcome measures have
@@ -335,12 +356,14 @@ if __name__ == '__main__':
     if args.fixed_distance:
         distance = pyabc.PNormDistance(p=2)
     else:
+        initial_weights = {k: 1 / (observed_data[k] * len(observed_data)) for k in observed_data}
+
         distance = pyabc.AdaptivePNormDistance(
-            p=2, scale_function=pyabc.distance.root_mean_square_deviation)
+            p=2, initial_weights=initial_weights,
+            scale_function=pyabc.distance.root_mean_square_deviation)
 
     # set up the sampler
     # use acceptor which seems to improve performance with adaptive distance
-
 
     abc = ABCSMC(stopsignal_model, parameter_prior, distance,
                  acceptor=pyabc.UniformAcceptor(use_complete_history=True))
@@ -355,13 +378,12 @@ if __name__ == '__main__':
         distance_string = 'fixed_distance' if args.fixed_distance else 'adaptive_distance'
         db_path = f'sqlite:///results/{args.study}_{modelname}_{distance_string}.db'
 
-    observed_data = get_observed_data(args)
-
     # initiatize database and add observed data
     abc.new(db_path, observed_data)
 
     # %%
     # run the model
-    sampler_history = abc.run(
-        minimum_epsilon=min_epsilon,
-        max_nr_populations=max_populations,)
+    if not args.setuponly:
+        sampler_history = abc.run(
+            minimum_epsilon=min_epsilon,
+            max_nr_populations=max_populations,)
