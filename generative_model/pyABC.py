@@ -97,6 +97,33 @@ def stopsignal_model_gradedmugo(parameters):
     # install ABCSMC parameters into full parameter set
     parameters['nondecision'] = int(parameters['nondecision'])
     params['mu']['go'] = parameters['mu_go']
+    params['mu_go_grader'] = "log"
+    params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
+    params['mu_delta_incorrect'] = parameters['mu_delta_incorrect']
+    params['noise_sd'] = {'go': parameters['noise_sd'],
+                          'stop': parameters['noise_sd']}
+    params['nondecision'] = {'go': parameters['nondecision'],
+                             'stop': parameters['nondecision']}
+    params = setup_ssd_params(params)
+    return(_stopsignal_model(params))
+
+
+def stopsignal_model_gradedmuboth(parameters):
+    """wrapper for graded mu go model
+
+    Args:
+        parameters (dict): parameters for model
+    """
+    # load full initial parameter set from file
+    paramfile = f'params/params_gradedmugo.json'
+    with open(paramfile) as f:
+        params = json.load(f)
+
+    # install ABCSMC parameters into full parameter set
+    parameters['nondecision'] = int(parameters['nondecision'])
+    params['mu']['go'] = parameters['mu_go']
+    params['mu_go_grader'] = "log"
+    params['mu_stop_grader'] = "log"
     params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
     params['mu_delta_incorrect'] = parameters['mu_delta_incorrect']
     params['noise_sd'] = {'go': parameters['noise_sd'],
@@ -170,6 +197,7 @@ def stopsignal_model_fullabcd(parameters):
 
     # install ABCSMC parameters into full parameter set
     parameters['nondecision'] = int(parameters['nondecision'])
+    params['mu_go_grader'] = "log"
     params['mu']['go'] = parameters['mu_go']
     params['mu']['stop'] = parameters['mu_go'] + parameters['mu_stop_delta']
     params['mu_delta_incorrect'] = parameters['mu_delta_incorrect']
@@ -287,7 +315,7 @@ def get_observed_data(args):
 
 def get_parameter_priors(model):
     priors = None
-    if model in ['basic', 'gradedmugo']:
+    if model in ['basic', 'gradedmugo', 'gradedmuboth']:
         priors = Distribution(
             mu_go=RV("uniform", .1, .5),
             mu_stop_delta=RV("uniform", 0, 1),
