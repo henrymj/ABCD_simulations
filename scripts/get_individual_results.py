@@ -38,7 +38,7 @@ def get_args():
 
 def weight_ssrts(sub_df, ABCD_SSD_dists):
     sub_df = sub_df.copy()
-    indiv_SSRT = np.zeros((1, 5))
+    indiv_SSRT = np.zeros((1, 6))
     sub = sub_df['NARGUID'].unique()[0]
     sub_dists = ABCD_SSD_dists.query("NARGUID=='%s'" % sub)
     for SSD in sub_dists.SSDDur:
@@ -47,9 +47,16 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
                                ].values[0]
         weight = sub_dists.loc[sub_dists.SSDDur == SSD, 'proportion'].values
         indiv_SSRT[0][:4] += ssd_SSRTs * weight
+    # append fixed, tracked
     indiv_SSRT[0][4] = sub_df.loc[sub_df.SSD == -np.inf, 'standard'].values[0]
+    indiv_SSRT[0][5] = sub_df.loc[sub_df.SSD == np.inf, 'standard'].values[0]
     return pd.DataFrame(indiv_SSRT,
-                        columns=['standard', 'guesses', 'graded_go', 'graded_both', 'fixed'])
+                        columns=['standard',
+                                 'guesses',
+                                 'graded_go',
+                                 'graded_both',
+                                 'fixed',
+                                 'tracking'])
 
 
 # In[3]:

@@ -18,7 +18,7 @@ def get_args():
                         help='subjects to run simulations on', required=True)
     parser.add_argument('--abcd_dir', default='../abcd_data',
                         help='location of ABCD data')
-    parser.add_argument('--sim_dir',
+    parser.add_argument('--sim_dir_base',
                         default='../simulated_data/individual_data',
                         help='location to save simulated data')
     parser.add_argument('--out_dir',
@@ -38,7 +38,11 @@ def get_args():
     return(args)
 
 
-def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
+def generate_out_df(data,
+                    SSD_guess_dict,
+                    graded_go_dict,
+                    guess_sampler,
+                    tracked_data):
     info = []
     ssrtmodel = SSRTmodel(model='replacement')
     goRTs = data.loc[data.goRT.notnull(), 'goRT'].values
@@ -74,6 +78,13 @@ def generate_out_df(data, SSD_guess_dict, graded_go_dict, guess_sampler):
     curr_info = [v for v in curr_metrics.values()] +\
                 [-np.inf, np.nan, np.nan]
     info.append(curr_info)
+
+    # get metrics for tracking-based data
+    # double kludge, -inf for fixed, +inf for tracking
+    tracked_metrics = ssrtmodel.fit_transform(tracked_data)
+    tracked_info = [v for v in tracked_metrics.values()] +\
+                   [np.inf, np.nan, np.nan]
+    info.append(tracked_info)
 
     return pd.DataFrame(
         info,
@@ -164,6 +175,8 @@ if __name__ == '__main__':
     # CALCULATE SSRT
     SSDs = get_SSDs(args)
     issue_subs = []
+
+    fixed_sim_dir = args.sim_dir_base + '_fixed'
     for sub in args.subjects:
         try:
             params = {
@@ -177,14 +190,16 @@ if __name__ == '__main__':
                     SSD,
                     sub_params=params)
 
-            for data_file in glob(path.join(args.sim_dir, '*%s*.csv' % sub)):
+            for data_file in glob(path.join(fixed_sim_dir, '*%s*.csv' % sub)):
                 sim_type = path.basename(
                     data_file
                     ).replace('.csv', '')
+                tracked_data_file = data_file.replace('fixed', 'tracking')
                 out_df = generate_out_df(pd.read_csv(data_file),
                                          SSD_guess_dict,
                                          graded_go_dict,
-                                         sample_exgauss)
+                                         sample_exgauss,
+                                         pd.read_csv(tracked_data_file))
                 out_df.to_csv(path.join(args.out_dir, '%s.csv' % sim_type))
         except KeyError as err:
             print("KeyError error for sub {0}: {1}".format(sub, err))

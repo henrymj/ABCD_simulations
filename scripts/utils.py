@@ -76,7 +76,8 @@ class SimulateData():
                                           stop_init_time=stop_init_time)
             # if it's a guess trial, guess, otherwise accumulate
             if np.random.rand() < self._p_guess_stop_dict[SSD]:
-                go_rt = params['guess_function'](1)
+                # sample and grab the single rt
+                go_rt = params['guess_function'](1)[0]
             else:
                 go_rt = self._accumulate(trial,
                                          trial['mu_go'],
