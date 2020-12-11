@@ -349,6 +349,7 @@ if __name__ == '__main__':
         'simpleguessing': stopsignal_model_simpleguessing,
         'scaledguessing': stopsignal_model_scaledguessing,
         'gradedmugo': stopsignal_model_gradedmugo,
+        'gradedmuboth': stopsignal_model_gradedmuboth,
         'fullabcd': stopsignal_model_fullabcd
     }
     for model in args.model:
