@@ -7,6 +7,33 @@ from scipy.stats import exponnorm
 from utils import SimulateData
 
 
+def get_args():
+    parser = argparse.ArgumentParser(description='ABCD data simulations')
+    parser.add_argument('--n_trials_stop', default=2500)
+    parser.add_argument('--n_trials_tracking_stop', default=25000)
+    parser.add_argument('--n_trials_go', default=5000)
+    parser.add_argument('--subjects', nargs='+',
+                        help='subjects to run simulations on', required=True)
+    parser.add_argument('--abcd_dir',
+                        default='../abcd_data',
+                        help='location of ABCD data')
+    parser.add_argument('--out_dir_base',
+                        default='../simulated_data/individual_data',
+                        help='location to save simulated data')
+    parser.add_argument('--clip_SSDs_bool',
+                        default=True,
+                        help='clip fixed SSD design to clipped SSD instead of max',
+                        type=bool)
+    parser.add_argument('--max_SSD',
+                        default=900,
+                        help='max SSD of the dataset')
+    parser.add_argument('--clipped_SSD',
+                        default=500,
+                        help='max SSD to use if dist is clipped')
+    args = parser.parse_args()
+    return(args)
+
+
 def generate_exgauss_sampler_from_fit(data,
                                       default_sample_size=100000):
     FIT_K, FIT_LOC, FIT_SCALE = sstats.exponnorm.fit(data)
@@ -53,32 +80,6 @@ def get_SSDs(args):
     return np.arange(0, max_SSD+50, 50)
 
 
-def get_args():
-    parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--n_trials_stop', default=2500)
-    parser.add_argument('--n_trials_go', default=5000)
-    parser.add_argument('--subjects', nargs='+',
-                        help='subjects to run simulations on', required=True)
-    parser.add_argument('--abcd_dir',
-                        default='../abcd_data',
-                        help='location of ABCD data')
-    parser.add_argument('--out_dir',
-                        default='../simulated_data/individual_data',
-                        help='location to save simulated data')
-    parser.add_argument('--clip_SSDs_bool',
-                        default=True,
-                        help='clip fixed SSD design to clipped SSD instead of max',
-                        type=bool)
-    parser.add_argument('--max_SSD',
-                        default=900,
-                        help='max SSD of the dataset')
-    parser.add_argument('--clipped_SSD',
-                        default=500,
-                        help='max SSD to use if dist is clipped')
-    args = parser.parse_args()
-    return(args)
-
-
 if __name__ == '__main__':
     print('getting args')
     args = get_args()
@@ -110,6 +111,7 @@ if __name__ == '__main__':
     SSDs = get_SSDs(args)
     params = {
         'n_trials_stop': args.n_trials_stop,
+        'n_trials_tracking_stop': args.n_trials_tracking_stop,
         'n_trials_go': args.n_trials_go,
         'guess_function': sample_exgauss,
         'SSDs': SSDs,
@@ -119,18 +121,23 @@ if __name__ == '__main__':
     # SIMULATE INDIVIDUALS
     issue_subs = []
     for sub in args.subjects:
-        try:
-            params['mu_go'] = mus_dict[sub]['go']
-            params['mu_stop'] = mus_dict[sub]['stop']
+        # try:
+        params['mu_go'] = mus_dict[sub]['go']
+        params['mu_stop'] = mus_dict[sub]['stop']
 
-            for sim_key in simulator_dict:
-                data = simulator_dict[sim_key].simulate(params)
+        for sim_key in simulator_dict:
+            for method in ['fixed', 'tracking']:
+                data = simulator_dict[sim_key].simulate(params,
+                                                        method=method)
                 data['simulation'] = sim_key
-                data.to_csv('%s/%s_%s.csv' % (args.out_dir, sim_key, str(sub)))
-        except KeyError as err:
-            print("KeyError error for sub {0}: {1}".format(sub, err))
-            issue_subs.append(sub)
-            continue
+                data.to_csv('%s_%s/%s_%s.csv' % (args.out_dir_base,
+                                                    method,
+                                                    sim_key,
+                                                    str(sub)))
+        # except KeyError as err:
+        #     print("KeyError error for sub {0}: {1}".format(sub, err))
+        #     issue_subs.append(sub)
+        #     continue
     if len(issue_subs) > 0:
         print('issue subs: ', issue_subs)
     else:

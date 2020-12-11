@@ -25,16 +25,20 @@ class SimulateData():
         }
         self._trial_iter = trial_iterators[model]
 
-    def simulate(self, params=None):
+    def simulate(self, params=None, method='fixed'):
+        assert method in ['fixed', 'tracking']
         params = params if params else {}
         params = self._init_params(params)
         data_dict = self._init_data_dict()
         self._set_n_trials(params)
         self._set_n_guesses(params)
-        for ssd_idx, SSD in enumerate(params['SSDs']):
-            data_dict = self._simulate_guesses(data_dict, params, SSD)
-            data_dict = self._simulate_stop_trials(data_dict, params,
-                                                   SSD)
+        if method == 'fixed':
+            for ssd_idx, SSD in enumerate(params['SSDs']):
+                data_dict = self._simulate_guesses(data_dict, params, SSD)
+                data_dict = self._simulate_stop_trials(data_dict, params,
+                                                       SSD)
+        if method == 'tracking':
+            data_dict = self._simulate_tracking_stop_trials(data_dict, params)
         data_dict = self._simulate_go_trials(data_dict, params)
 
         return self._convert_data_to_df(data_dict)
@@ -62,6 +66,57 @@ class SimulateData():
         else:
             rt = np.nan
         return rt
+
+    def _simulate_tracking_stop_trials(self, data_dict, params):
+        SSD = params['tracking_start_ssd']
+        for trial_idx in range(params['n_trials_tracking_stop']):
+            stop_init_time = SSD + params['nondecision_stop']
+            trial = self._init_trial_dict(params, trial_idx,
+                                          SSD=SSD,
+                                          stop_init_time=stop_init_time)
+            # if it's a guess trial, guess, otherwise accumulate
+            if np.random.rand() < self._p_guess_stop_dict[SSD]:
+                go_rt = params['guess_function'](1)
+            else:
+                go_rt = self._accumulate(trial,
+                                         trial['mu_go'],
+                                         trial['nondecision_go'],
+                                         trial['noise_go']
+                                         )
+            stop_rt = self._accumulate(trial,
+                                       trial['mu_stop'],
+                                       trial['stop_init_time'],
+                                       trial['noise_stop']
+                                       )
+
+            out_rt = np.nan
+            if ~np.isnan(go_rt):
+                out_rt = go_rt
+            if ~np.isnan(go_rt) and ~np.isnan(stop_rt) and stop_rt < go_rt:
+                out_rt = np.nan
+            trial['RT'] = out_rt
+            data_dict = self._update_data_dict(data_dict, trial)
+
+            # UPDATE SSD
+            SSD = self._trackSSD(SSD, params, np.isnan(out_rt))
+
+        return data_dict
+
+    def _trackSSD(self, SSD, params, stop_success_bool):
+
+        if stop_success_bool:
+            SSD += params['tracking_ssd_step']
+        else:
+            SSD -= params['tracking_ssd_step']
+
+        if SSD < params['tracking_min_ssd']:
+            SSD = params['tracking_min_ssd']
+        elif SSD > params['tracking_max_ssd']:
+            SSD = params['tracking_max_ssd']
+        else:
+            SSD = SSD
+        return SSD
+
 
     def _simulate_guesses(self, data_dict, params, SSD):
         if SSD is None:  # go trials
@@ -229,8 +284,6 @@ class SimulateData():
                                zip(params['SSDs'], n_trials_stop)}
 
     def _set_n_guesses(self, params):
-        # TODO: ADD ASSERTIONS TO CHECK FOR CORRECT USES, clean up!!!
-        # TODO: allow for guessing on go trials
         num_SSDs = len(params['SSDs'])
         if self.guesses:
             p_guess_go = params['p_guess_go']
@@ -259,6 +312,9 @@ class SimulateData():
                                 np.rint(float(p * self._n_trials_stop[SSD])))
                               for SSD, p in zip(params['SSDs'],
                                                 p_guess_per_SSD)}
+        # set up probability dictionary for tracking model
+        self._p_guess_stop_dict = {SSD: p for SSD, p in zip(params['SSDs'],
+                                                       p_guess_per_SSD)}
 
     def _get_mu_stop(self, params, SSD):
         mu_stop = params['mu_stop']
@@ -303,13 +359,17 @@ class SimulateData():
                         'SSDs': np.arange(0, 600, 50),
                         'n_trials_go': 1000,
                         'n_trials_stop': 1000,
+                        'n_trials_tracking_stop': 10000,
                         'max_time': 3000,
                         'p_trigger_fail': 0,
                         'p_guess_go': 0,
                         'p_guess_stop': 0,
                         'guess_function': lambda x: np.random.uniform(
                             200, 400, x),
-                        'mu_go_grader': 'log'
+                        'tracking_start_ssd': 50,
+                        'tracking_min_ssd': 0,
+                        'tracking_max_ssd': 500,
+                        'tracking_ssd_step': 50,
                         }
 
         for key in default_dict:
