@@ -20,6 +20,7 @@
 # %%
 # imports
 
+from stopsignalmodel import StopSignalModel
 import pyabc
 import json
 from pyabc import (ABCSMC,
@@ -31,8 +32,9 @@ import logging
 import argparse
 import tempfile
 
-from ssd import fixedSSD
+from ssd import fixedSSD, trackingSSD
 from stoptaskstudy import StopTaskStudy
+from generative_utils import cleanup_metrics
 
 
 def get_args():
@@ -40,7 +42,7 @@ def get_args():
     parser.add_argument('--study', help='study label to define dataset to be fit')
     parser.add_argument('--model', nargs='+', help='model label(s)', required=True)
     parser.add_argument('--generator',  help='model used to generate data (for model recovery')
-    parser.add_argument('--generator_params',  help='params file for generative model', default='params/generative_model.json')
+    parser.add_argument('--generative_paramfile',  help='params file for generative model', default='params/generative_model.json')
     parser.add_argument('--nthreads', help='max # of multiprocessing threads', default=8)
     parser.add_argument('--max_populations', help='max # of ABC populations', default=12)
     parser.add_argument('--min_epsilon', help='epsilon threshold for ABC', default=.1)
@@ -49,7 +51,7 @@ def get_args():
     parser.add_argument('--ssd_step', help='SSD step size', default=50)
     parser.add_argument('--random_seed', help='random seed', type=int)
     parser.add_argument('--p_guess_go', help='p_guess on go trials (default None)')
-    parser.add_argument('--test', help='use a test db file', action='store_true')
+    parser.add_argument('--tempdb', help='use a temporary db file', action='store_true')
     parser.add_argument('--setuponly', help='do not run estimation', action='store_true')
     parser.add_argument('--fixed_distance', help='use fixed rather than adaptive distance',
                         action='store_true')
@@ -62,25 +64,6 @@ def get_args():
     parser.add_argument('--tracking', help='use tracking algorithm', action='store_true')
     return parser.parse_args()
 
-
-# create a single-layer metrics dict for output
-# since the pickler can't handle multilevel dicts
-def cleanup_metrics(metrics):
-    for k in metrics['SSRT']:
-        metrics['SSRT_' + k] = metrics['SSRT'][k]
-    del metrics['SSRT']
-    return(metrics)
-
-
-def setup_ssd_params(params):
-    # set default params if not present
-    if 'min_ssd' not in params:
-        params['min_ssd'] = 0
-    if 'max_ssd' not in params:
-        params['max_ssd'] = 500
-    if 'ssd_step' not in params:
-        params['ssd_step'] = 50
-    return(params)
 
 
 def stopsignal_model_gradedmugo(parameters):
@@ -313,16 +296,17 @@ def get_observed_data(args):
     return(observed_data)
 
 
-def get_parameter_priors(model):
+def get_parameter_priors(parameters):
     priors = None
-    if model in ['basic', 'gradedmugo', 'gradedmuboth']:
+    use_guessing = True if 'pguess' in parameters and parameters['pguess'] is not None else False
+    if not use_guessing:
         priors = Distribution(
             mu_go=RV("uniform", .1, .5),
             mu_stop_delta=RV("uniform", 0, 1),
             mu_delta_incorrect=RV("uniform", 0, 0.2),
             noise_sd=RV("uniform", 2, 5),
             nondecision=RV("uniform", 25, 75))
-    elif model in ['simpleguessing', 'scaledguessing', 'fullabcd']:
+    else:
         priors = Distribution(
             mu_go=RV("uniform", .1, .5),
             mu_stop_delta=RV("uniform", 0, 1),
@@ -330,9 +314,18 @@ def get_parameter_priors(model):
             noise_sd=RV("uniform", 2, 5),
             nondecision=RV("uniform", 25, 75),
             pguess=RV("uniform", 0., .5))
-    else:
-        raise Exception(f'priors not defined for model {model}')
     return(priors)
+
+
+def get_parameters(models):
+    paramfiles = []
+    params = {}
+
+    for model in models:
+        paramfile = f'params/params_{model}.json'
+        with open(paramfile) as f:
+            params[model] = json.load(f)
+    return(params)
 
 
 if __name__ == '__main__':
@@ -344,16 +337,8 @@ if __name__ == '__main__':
     else:
         raise Exception('You must specify either study or generator')
 
-    stopsignal_model_func = {
-        'basic': stopsignal_model_basic,
-        'simpleguessing': stopsignal_model_simpleguessing,
-        'scaledguessing': stopsignal_model_scaledguessing,
-        'gradedmugo': stopsignal_model_gradedmugo,
-        'gradedmuboth': stopsignal_model_gradedmuboth,
-        'fullabcd': stopsignal_model_fullabcd
-    }
-    for model in args.model:
-        assert model in stopsignal_model_func
+    # make sure there are no duplicated models
+    assert len(args.model) == len(set(args.model)), "all models must be unique"
 
     if args.random_seed is not None:
         print('WARNING: Fixing random seed')
@@ -370,14 +355,24 @@ if __name__ == '__main__':
         df_logger = logging.getLogger('Distance')
         df_logger.setLevel(logging.DEBUG)
 
+            
+    parameters = get_parameters(args.model)
+
+    # first need to set up the model instances, so that their
+    # fit_transform() function can be passed below
+    stopsignalmodels = {}
+    use_guessing = {}
+    for p in parameters:
+        stopsignalmodels[p] = StopSignalModel(p, parameters=parameters[p])
+
     # set up priors amd models for ABC
     # these values are based on some hand-tweaking using the in-person dataset
-    if len(args.model) > 1:
-        stopsignal_model = [stopsignal_model_func[x] for x in args.model]
-        parameter_prior = [get_parameter_priors(x) for x in args.model]
-    else:
-        stopsignal_model = stopsignal_model_func[args.model[0]]
-        parameter_prior = get_parameter_priors(args.model[0])
+    stopsignal_model_func = [stopsignalmodels[x].fit_transform for x in args.model]
+    parameter_prior = [get_parameter_priors(parameters) for x in args.model]
+    if len(args.model) == 1:  # expects a single item, not a list
+
+        stopsignal_model_func = stopsignal_model_func[0]
+        parameter_prior = parameter_prior[0]
 
     if args.verbose:
         print(stopsignal_model)
@@ -388,9 +383,19 @@ if __name__ == '__main__':
         observed_data = get_observed_data(args)
     else:
         descriptor = f'generative_{args.generator}'
-        with open(args.generator_params) as f:
-            generative_params = json.load(f)
-        observed_data = stopsignal_model_func[args.generator](generative_params)
+        if args.generative_paramfile is None:
+            generative_paramfile = 'params/generative_model.json'
+        else:
+            generative_paramfile = args.generative_paramfile
+        with open(generative_paramfile) as f:
+            generative_model_params = json.load(f)
+        
+        if args.generator in ['basic', 'gradedmugo']:
+            del generative_model_params['pguess']
+        generative_model = StopSignalModel(
+            args.generator,
+            paramfile=f'params/params_{args.generator}.json')
+        observed_data = generative_model.fit_transform(generative_model_params)
 
     # use an adaptive distance function
     # which deals with the fact that different outcome measures have
@@ -408,11 +413,11 @@ if __name__ == '__main__':
     # set up the sampler
     # use acceptor which seems to improve performance with adaptive distance
 
-    abc = ABCSMC(stopsignal_model, parameter_prior, distance,
+    abc = ABCSMC(stopsignal_model_func, parameter_prior, distance,
                  acceptor=pyabc.UniformAcceptor(use_complete_history=True))
 
     # set up the database for the simulation
-    if args.test:
+    if args.tempdb:
         print('Test mode: using temp database')
         db_path = (
             f"sqlite:///{os.path.join(tempfile.gettempdir(), 'test.db')}")
