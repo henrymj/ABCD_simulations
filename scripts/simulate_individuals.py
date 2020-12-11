@@ -121,23 +121,23 @@ if __name__ == '__main__':
     # SIMULATE INDIVIDUALS
     issue_subs = []
     for sub in args.subjects:
-        # try:
-        params['mu_go'] = mus_dict[sub]['go']
-        params['mu_stop'] = mus_dict[sub]['stop']
+        try:
+            params['mu_go'] = mus_dict[sub]['go']
+            params['mu_stop'] = mus_dict[sub]['stop']
 
-        for sim_key in simulator_dict:
-            for method in ['fixed', 'tracking']:
-                data = simulator_dict[sim_key].simulate(params,
-                                                        method=method)
-                data['simulation'] = sim_key
-                data.to_csv('%s_%s/%s_%s.csv' % (args.out_dir_base,
-                                                    method,
-                                                    sim_key,
-                                                    str(sub)))
-        # except KeyError as err:
-        #     print("KeyError error for sub {0}: {1}".format(sub, err))
-        #     issue_subs.append(sub)
-        #     continue
+            for sim_key in simulator_dict:
+                for method in ['fixed', 'tracking']:
+                    data = simulator_dict[sim_key].simulate(params,
+                                                            method=method)
+                    data['simulation'] = sim_key
+                    data.to_csv('%s_%s/%s_%s.csv' % (args.out_dir_base,
+                                                        method,
+                                                        sim_key,
+                                                        str(sub)))
+        except KeyError as err:
+            print("KeyError error for sub {0}: {1}".format(sub, err))
+            issue_subs.append(sub)
+            continue
     if len(issue_subs) > 0:
         print('issue subs: ', issue_subs)
     else:
