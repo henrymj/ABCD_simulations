@@ -75,19 +75,19 @@ def get_parameter_priors(parameters):
     use_guessing = 'pguess' in parameters and parameters['pguess'] is not None
     if not use_guessing:
         return Distribution(
-            mu_go=RV("uniform", 0, 1),
+            mu_go=RV("uniform", 0.1, 1),
             mu_stop_delta=RV("uniform", 0, 1),
             mu_delta_incorrect=RV("uniform", 0, 0.8),
             noise_sd=RV("uniform", 0, 5),
             nondecision=RV("uniform", 0, 100))
     else:
         return Distribution(
-            mu_go=RV("uniform", 0, 1),
+            mu_go=RV("uniform", 0.1, 1),
             mu_stop_delta=RV("uniform", 0, 1),
             mu_delta_incorrect=RV("uniform", 0, 0.8),
             noise_sd=RV("uniform", 0, 5),
             nondecision=RV("uniform", 0, 100),
-            pguess=RV("uniform", 0., .5))
+            pguess=RV("uniform", 0., .3))
 
 
 def get_parameters(models):
