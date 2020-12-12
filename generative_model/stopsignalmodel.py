@@ -12,9 +12,10 @@ class StopSignalModel:
                           'scaledguessing',
                           'gradedmugo',
                           'gradedmuboth',
-                          'fullabcd']
-    
-    def __init__(self, model, paramfile=None, parameters=None, 
+                          'fullabcd',
+                          'cacaphony']
+
+    def __init__(self, model, paramfile=None, parameters=None,
                  ssdtype='fixed', **kwargs):
         """Class for stop signal model
 
@@ -88,11 +89,10 @@ class StopSignalModel:
         if 'pguess' in modelparams:
             self.parameters['p_guess']['go'] = modelparams['pguess']
 
-
     # takes in a dict of model parameters
     # returns a dict of peformance statistics
     def fit_transform(self, modelparams):
-        """model 
+        """model
 
         Args:
             modelparams (dict): parameters passed it from ABCSMC
@@ -135,6 +135,7 @@ class StopSignalModel:
         self.results_ = results
         return(results)
 
+
 if __name__ == '__main__':
     ssm = StopSignalModel('basic', paramfile='params/params_basic.json')
     assert ssm is not None
@@ -148,4 +149,3 @@ if __name__ == '__main__':
     assert result is not None
     assert all(item in result for item in [
         'mean_go_RT', 'mean_stopfail_RT', 'go_acc', 'sd_go_RT', 'sd_stopfail_RT'])
-   
