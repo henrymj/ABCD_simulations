@@ -130,7 +130,7 @@ if __name__ == '__main__':
                     data = simulator_dict[sim_key].simulate(params,
                                                             method=method)
                     data['simulation'] = sim_key
-                    data.to_csv('%s_%s/%s_%s.csv' % (args.out_dir_base,
+                    data.to_csv('%s/%s/%s_%s.csv' % (args.out_dir_base,
                                                         method,
                                                         sim_key,
                                                         str(sub)))

@@ -176,7 +176,6 @@ if __name__ == '__main__':
     SSDs = get_SSDs(args)
     issue_subs = []
 
-    fixed_sim_dir = args.sim_dir_base + '_fixed'
     for sub in args.subjects:
         try:
             params = {
@@ -190,7 +189,7 @@ if __name__ == '__main__':
                     SSD,
                     sub_params=params)
 
-            for data_file in glob(path.join(fixed_sim_dir, '*%s*.csv' % sub)):
+            for data_file in glob(path.join(args.sim_dir_base, 'fixed', '*%s*.csv' % sub)):
                 sim_type = path.basename(
                     data_file
                     ).replace('.csv', '')
