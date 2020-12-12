@@ -1,24 +1,6 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.7.1
-#   kernelspec:
-#     display_name: Python 3
-#     language: python
-#     name: python3
-# ---
-
-# %% [markdown]
 # ## Likelihood-free estimation of stop model parameters
 #
 # This notebook shows how to use approximate Bayesian computation via sequential Monte Carlo (ABC-SMC) using the pyABC package.
-
-# %%
-# imports
 
 from stopsignalmodel import StopSignalModel
 import pyabc
@@ -32,17 +14,13 @@ import logging
 import argparse
 import tempfile
 
-from ssd import fixedSSD, trackingSSD
-from stoptaskstudy import StopTaskStudy
-from generative_utils import cleanup_metrics
-
 
 def get_args():
     parser = argparse.ArgumentParser(description='fit stop model params using ABC-SMC')
     parser.add_argument('--study', help='study label to define dataset to be fit')
     parser.add_argument('--model', nargs='+', help='model label(s)', required=True)
-    parser.add_argument('--generator',  help='model used to generate data (for model recovery')
-    parser.add_argument('--generative_paramfile',  help='params file for generative model', default='params/generative_model.json')
+    parser.add_argument('--generator', help='model used to generate data (for model recovery')
+    parser.add_argument('--generative_paramfile', help='params file for generative model', default='params/generative_model.json')
     parser.add_argument('--nthreads', help='max # of multiprocessing threads', default=8)
     parser.add_argument('--max_populations', help='max # of ABC populations', default=12)
     parser.add_argument('--min_epsilon', help='epsilon threshold for ABC', default=.1)
@@ -94,30 +72,26 @@ def get_observed_data(args):
 
 
 def get_parameter_priors(parameters):
-    priors = None
-    use_guessing = True if 'pguess' in parameters and parameters['pguess'] is not None else False
+    use_guessing = 'pguess' in parameters and parameters['pguess'] is not None
     if not use_guessing:
-        priors = Distribution(
+        return Distribution(
             mu_go=RV("uniform", .1, .5),
             mu_stop_delta=RV("uniform", 0, 1),
             mu_delta_incorrect=RV("uniform", 0, 0.2),
             noise_sd=RV("uniform", 2, 5),
             nondecision=RV("uniform", 25, 75))
     else:
-        priors = Distribution(
+        return Distribution(
             mu_go=RV("uniform", .1, .5),
             mu_stop_delta=RV("uniform", 0, 1),
             mu_delta_incorrect=RV("uniform", 0, 0.2),
             noise_sd=RV("uniform", 2, 5),
             nondecision=RV("uniform", 25, 75),
             pguess=RV("uniform", 0., .5))
-    return(priors)
 
 
 def get_parameters(models):
-    paramfiles = []
     params = {}
-
     for model in models:
         paramfile = f'params/params_{model}.json'
         with open(paramfile) as f:
@@ -152,15 +126,14 @@ if __name__ == '__main__':
         df_logger = logging.getLogger('Distance')
         df_logger.setLevel(logging.DEBUG)
 
-            
     parameters = get_parameters(args.model)
 
+    use_guessing = {}
     # first need to set up the model instances, so that their
     # fit_transform() function can be passed below
-    stopsignalmodels = {}
-    use_guessing = {}
-    for p in parameters:
-        stopsignalmodels[p] = StopSignalModel(p, parameters=parameters[p])
+    stopsignalmodels = {
+        p: StopSignalModel(p, parameters=parameters[p]) for p in parameters
+    }
 
     # set up priors amd models for ABC
     # these values are based on some hand-tweaking using the in-person dataset
@@ -172,9 +145,9 @@ if __name__ == '__main__':
         parameter_prior = parameter_prior[0]
 
     if args.verbose:
-        print(stopsignal_model)
         print(parameter_prior)
 
+    # set up generative model
     if args.generator is None:
         descriptor = args.study
         observed_data = get_observed_data(args)
@@ -186,7 +159,7 @@ if __name__ == '__main__':
             generative_paramfile = args.generative_paramfile
         with open(generative_paramfile) as f:
             generative_model_params = json.load(f)
-        
+
         if args.generator in ['basic', 'gradedmugo']:
             del generative_model_params['pguess']
         generative_model = StopSignalModel(
@@ -226,8 +199,6 @@ if __name__ == '__main__':
     # initiatize database and add observed data
     abc.new(db_path, observed_data)
 
-    # %%
-    # run the model
     if not args.setuponly:
         sampler_history = abc.run(
             minimum_epsilon=min_epsilon,
