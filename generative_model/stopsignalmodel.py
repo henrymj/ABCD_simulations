@@ -91,7 +91,7 @@ class StopSignalModel:
 
     # takes in a dict of model parameters
     # returns a dict of peformance statistics
-    def fit_transform(self, modelparams):
+    def fit_transform(self, modelparams, verbose=False):
         """model
 
         Args:
@@ -120,6 +120,8 @@ class StopSignalModel:
         results = {}
 
         metrics = cleanup_metrics(metrics)
+        if verbose:
+            print(metrics)
         for k in ['mean_go_RT', 'mean_stopfail_RT', 'go_acc', 'sd_go_RT', 'sd_stopfail_RT']:
             results.update({k: metrics[k]})
         # need to separate presp values since distance fn can't take a vector
