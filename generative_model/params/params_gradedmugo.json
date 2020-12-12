@@ -19,6 +19,7 @@
         "stop": 4000
     },
     "mu_go_grader": "log",
+    "mu_stop_grader": null,
     "p_guess": {
         "go": null,
         "stop": null
