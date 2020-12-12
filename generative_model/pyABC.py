@@ -75,18 +75,18 @@ def get_parameter_priors(parameters):
     use_guessing = 'pguess' in parameters and parameters['pguess'] is not None
     if not use_guessing:
         return Distribution(
-            mu_go=RV("uniform", .1, .5),
+            mu_go=RV("uniform", 0, 1),
             mu_stop_delta=RV("uniform", 0, 1),
-            mu_delta_incorrect=RV("uniform", 0, 0.2),
-            noise_sd=RV("uniform", 2, 5),
-            nondecision=RV("uniform", 25, 75))
+            mu_delta_incorrect=RV("uniform", 0, 0.8),
+            noise_sd=RV("uniform", 0, 5),
+            nondecision=RV("uniform", 0, 100))
     else:
         return Distribution(
-            mu_go=RV("uniform", .1, .5),
+            mu_go=RV("uniform", 0, 1),
             mu_stop_delta=RV("uniform", 0, 1),
-            mu_delta_incorrect=RV("uniform", 0, 0.2),
-            noise_sd=RV("uniform", 2, 5),
-            nondecision=RV("uniform", 25, 75),
+            mu_delta_incorrect=RV("uniform", 0, 0.8),
+            noise_sd=RV("uniform", 0, 5),
+            nondecision=RV("uniform", 0, 100),
             pguess=RV("uniform", 0., .5))
 
 
@@ -184,7 +184,8 @@ if __name__ == '__main__':
     # use acceptor which seems to improve performance with adaptive distance
 
     abc = ABCSMC(stopsignal_model_func, parameter_prior, distance,
-                 acceptor=pyabc.UniformAcceptor(use_complete_history=True))
+                 acceptor=pyabc.UniformAcceptor(use_complete_history=True),
+                 stop_if_only_single_model_alive=True)
 
     # set up the database for the simulation
     if args.tempdb:
