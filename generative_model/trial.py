@@ -25,7 +25,8 @@ def init_default_params():
             'noise_sd': {'go': 2.2, 'stop': 2.2},
             'threshold': 100,
             'ntrials': {'go': 10000, 'stop': 2000},
-            'graded_mu_go': None,
+            'mu_go_grader': None,
+            'mu_stop_grader': None,
             'p_guess': {'go': None, 'stop': None},
             'exgauss_params': {'K': 2.2642549666245166,
                                'loc': 196.16188286978473,
@@ -170,8 +171,12 @@ class Trial:
                 self.correct_ = replace_none(correct_rt) < replace_none(incorrect_rt)
 
         if self.trial_type == 'stop':
+            if trial_params['mu_stop_grader'] == 'log':
+                mu_stop = log_mu_go(trial_params['mu']['stop'], self.SSD)
+            else:
+                mu_stop = trial_params['mu']['stop']
             accumulator = Accumulator(
-                mu=trial_params['mu']['stop'],
+                mu=mu_stop,
                 noise_sd=trial_params['noise_sd']['stop'],
                 starting_point=self.SSD + trial_params['nondecision']['stop'],
                 max_time=trial_params['max_time'])
