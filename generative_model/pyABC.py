@@ -203,4 +203,5 @@ if __name__ == '__main__':
     if not args.setuponly:
         sampler_history = abc.run(
             minimum_epsilon=min_epsilon,
-            max_nr_populations=max_populations,)
+            max_nr_populations=max_populations,
+            break_on_nan_eps=True)
