@@ -124,6 +124,10 @@ class StopTaskStudy:
         # compute metrics
         ssrt_model = SSRTmodel(model='all')
         self.metrics_ = ssrt_model.fit_transform(trialdata_proc)
+        for k in self.metrics_:
+            if self.metrics_[k] is None:
+                print('replacing None with zero for', k)
+                self.metrics_[k] = 0
         return(self.metrics_)
 
     def save_metrics(self):
