@@ -175,9 +175,12 @@ if __name__ == '__main__':
         distance = pyabc.PNormDistance(p=2)
     else:
         initial_weights = {k: 1 / (observed_data[k] * len(observed_data)) for k in observed_data}
-
+        # downweight accuracy and presp values
+        factors = {}
+        for k in observed_data:
+            factors[k] = 1/10 if k.find('presp')==0 or k.find('accuracy')==0 else 1
         distance = pyabc.AdaptivePNormDistance(
-            p=2, initial_weights=initial_weights,
+            p=2, initial_weights=initial_weights, factors=factors,
             scale_function=pyabc.distance.root_mean_square_deviation)
 
     # set up the sampler
@@ -203,5 +206,4 @@ if __name__ == '__main__':
     if not args.setuponly:
         sampler_history = abc.run(
             minimum_epsilon=min_epsilon,
-            max_nr_populations=max_populations,
-            break_on_nan_eps=True)
+            max_nr_populations=max_populations)
