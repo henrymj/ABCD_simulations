@@ -9,6 +9,7 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
+    parser.add_argument('--mu_suffix', Required=True)
     parser.add_argument('--n_trials_stop', default=2500)
     parser.add_argument('--n_trials_tracking_stop', default=25000)
     parser.add_argument('--n_trials_go', default=5000)
@@ -30,8 +31,7 @@ def get_args():
     parser.add_argument('--clipped_SSD',
                         default=500,
                         help='max SSD to use if dist is clipped')
-    args = parser.parse_args()
-    return(args)
+    return parser.parse_args()
 
 
 def generate_exgauss_sampler_from_fit(data,
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     sample_exgauss = generate_exgauss_sampler_from_params(exgauss_params)
 
     # assigned mus
-    with open('%s/assigned_mus.json' % args.abcd_dir) as json_file:
+    with open('%s/assigned_mus_%s.json' % (args.abcd_dir, args.mu_suffix)) as json_file:
         mus_dict = json.load(json_file)
 
     # SETUP SIMULATORS
@@ -130,7 +130,8 @@ if __name__ == '__main__':
                     data = simulator_dict[sim_key].simulate(params,
                                                             method=method)
                     data['simulation'] = sim_key
-                    data.to_csv('%s/%s/%s_%s.csv' % (args.out_dir_base,
+                    data.to_csv('%s_%s/%s/%s_%s.csv' % (args.out_dir_base,
+                                                        args.mu_suffix,
                                                         method,
                                                         sim_key,
                                                         str(sub)))
@@ -138,7 +139,7 @@ if __name__ == '__main__':
             print("KeyError error for sub {0}: {1}".format(sub, err))
             issue_subs.append(sub)
             continue
-    if len(issue_subs) > 0:
+    if issue_subs:
         print('issue subs: ', issue_subs)
     else:
         print('no problematic subs run here!')
