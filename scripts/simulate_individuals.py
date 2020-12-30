@@ -9,7 +9,7 @@ from utils import SimulateData
 
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
-    parser.add_argument('--mu_suffix', Required=True)
+    parser.add_argument('--mu_suffix', required=True)
     parser.add_argument('--n_trials_stop', default=2500)
     parser.add_argument('--n_trials_tracking_stop', default=25000)
     parser.add_argument('--n_trials_go', default=5000)
