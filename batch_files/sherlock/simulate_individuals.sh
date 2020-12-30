@@ -1,4 +1,4 @@
-for mu_suffix in SSRTscale-85 SSRTscale-25 SSRTscale-0 SSRTscale-0_RTscale-0
+for mu_suffix in SSRTscale-85
 do
     for iter in {0..4}
     do
