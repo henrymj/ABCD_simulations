@@ -47,61 +47,9 @@ def get_completed_subs(dir_path):
 
 if __name__ == '__main__':
 
-    shell_path = 'TACC/run_SSRTs.sh'
-    launcher_path = 'TACC/launch_SSRT_cmds.slurm'
-    sher_sim_file = 'sherlock/sherlock_run_ssrt%d.batch'
+    # CONSTANTS
+    SSRT_SCALES = [85, 25, 0]
 
-    # ## get subs w SSRT computations
-    # In[16]:
-    subs_w_ssrts = get_completed_subs('../ssrt_metrics/individual_metrics')
-
-    # ## get simulated subs
-    # In[14]:
-
-    simulated_subs = get_completed_subs('../simulated_data/individual_data')
-
-    # In[15]:
-
-    # ## get remainder and write script sh file
-    # In[28]:
-    remaining_subs = set(simulated_subs).difference(subs_w_ssrts)
-    print(len(remaining_subs))
-    print(len(simulated_subs))
-    print(len(subs_w_ssrts))
-    assert len(remaining_subs) == (len(simulated_subs) - len(subs_w_ssrts))
-
-    remaining_subs = np.array(list(remaining_subs))
-
-    # TACC:
-    nsubs_per_job = 48
-    njobs_per_node = 36
-    nlines = 0
-
-    with open(shell_path, 'w') as f:
-        for start_idx in range(0, len(remaining_subs), nsubs_per_job):
-            end_idx = start_idx + nsubs_per_job
-            if end_idx > len(remaining_subs):
-                end_idx = len(remaining_subs)
-            substr = ' '.join(remaining_subs[start_idx:end_idx])
-            f.write(f'python ../../scripts/compute_indiv_SSRTs.py --subjects {substr}\n')
-            nlines += 1
-
-    N_line_str = '#SBATCH -N %d # number of nodes requested - set to ceil(n rows in command script / 36)\n' % int(np.ceil(nlines/njobs_per_node))
-    n_line_str = '#SBATCH -n %s # total number of mpi tasks requested - set to n rows in command script\n' % nlines
-
-    replace(
-        launcher_path,
-        '#SBATCH -N',
-        N_line_str)
-    replace(
-        launcher_path,
-        '#SBATCH -n',
-        n_line_str)
-    # prints so you can compare the lines of the slurm file
-    print(N_line_str)
-    print(n_line_str)
-
-    # SHERLOCK
     sher_header = '''#!/bin/bash
 #SBATCH --job-name=ssrt
 #SBATCH --output=.out/ssrt%d.out
@@ -124,29 +72,57 @@ conda activate py3-env
     SIM_LOC = '/oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/simulated_data/individual_data'
     SSRT_LOC = '/oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics/individual_metrics'
 
-    nsubs_per_job = 48
-    njobs_per_node = 24
-    nlines = 0
-    batch_counter = 0
+    # HELPER FUNCTIONS USING ABOVE PATHS (yes they should be pulled out I know)
+    def get_mu_suffix(SSRT_SCALE=85, GORT_SCALE=93.84023748232624):
+        stop_str_suffix = 'SSRTscale-%d' % SSRT_SCALE
+        go_str_suffix = ''
+        if GORT_SCALE != 93.84023748232624:
+            go_str_suffix = '_RTscale-%d' % GORT_SCALE
+        return '%s%s' % (stop_str_suffix, go_str_suffix)
 
-    file_str = sher_header
-    for start_idx in range(0, len(remaining_subs), nsubs_per_job):
-        end_idx = start_idx + nsubs_per_job
-        if end_idx > len(remaining_subs):
-            end_idx = len(remaining_subs)
-        substr = ' '.join(remaining_subs[start_idx:end_idx])
-        file_str += (f'eval "python ../../scripts/compute_indiv_SSRTs.py --abcd_dir {ABCD_LOC} --sim_dir {SIM_LOC} --out_dir {SSRT_LOC} --subjects {substr}" &\n')
-        nlines += 1
-        if nlines == 24:
+    def get_remaining_subs(mu_suffix):
+        simulated_subs = get_completed_subs(SIM_LOC+'_'+mu_suffix)
+        subs_w_ssrts = get_completed_subs(SSRT_LOC+'_'+mu_suffix)
+        remaining_subs = set(simulated_subs).difference(subs_w_ssrts)
+        assert len(remaining_subs) == (len(simulated_subs) - len(subs_w_ssrts))
+        return np.array(list(remaining_subs))
+
+    def make_sherlock_ssrt_batch_files(sher_sim_file, suffix):
+        nsubs_per_job = 72
+        njobs_per_node = 24
+        nlines = 0
+        batch_counter = 0
+
+        remaining_subs = get_remaining_subs(suffix)
+
+        file_str = sher_header
+        for start_idx in range(0, len(remaining_subs), nsubs_per_job):
+            end_idx = start_idx + nsubs_per_job
+            end_idx = min(end_idx, len(remaining_subs))
+            substr = ' '.join(remaining_subs[start_idx:end_idx])
+            file_str += (f'eval "python ../../scripts/compute_indiv_SSRTs.py --mu_suffix {suffix} --abcd_dir {ABCD_LOC} --sim_dir {SIM_LOC} --out_dir {SSRT_LOC} --subjects {substr}" &\n')
+            nlines += 1
+            if nlines == njobs_per_node:
+                with open(sher_sim_file % batch_counter, 'w') as f:
+                    f.write(file_str % (batch_counter, batch_counter, nlines))
+                    f.write(f'wait\n')
+                # reset for new batch file
+                file_str = sher_header
+                nlines = 0
+                batch_counter += 1
+        # at end, if things didn't split out evenly, write out the remaining subs
+        if nlines > 0:
             with open(sher_sim_file % batch_counter, 'w') as f:
                 f.write(file_str % (batch_counter, batch_counter, nlines))
                 f.write(f'wait\n')
-            # reset for new batch file
-            file_str = sher_header
-            nlines = 0
-            batch_counter += 1
-    # at end, if things didn't split out evenly, write out the remaining subs
-    if nlines > 0:
-        with open(sher_sim_file % batch_counter, 'w') as f:
-            f.write(file_str % (batch_counter, batch_counter, nlines))
-            f.write(f'wait\n')
+
+    # MAIN BODY
+    for SSRT_SCALE in SSRT_SCALES:
+        suffix = get_mu_suffix(SSRT_SCALE)
+        sher_file = 'batch_files/sherlock/%s/' % suffix + '/sherlock_run_ssrt_iter%d.batch'
+        make_sherlock_ssrt_batch_files(sher_file, suffix)
+
+    # Single Individual Case
+    suffix_noVar = get_mu_suffix(0, 0)
+    sher_file = 'batch_files/sherlock/%s/' % suffix_noVar + '/sherlock_run_ssrt_iter%d.batch'
+    make_sherlock_ssrt_batch_files(sher_file, suffix_noVar)

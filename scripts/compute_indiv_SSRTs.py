@@ -14,6 +14,7 @@ from utils import SimulateData
 def get_args():
     parser = argparse.ArgumentParser(description='ABCD data simulations')
     parser.add_argument('--n_graded_go_trials', default=5000)
+    parser.add_argument('--mu_suffix', required=True)
     parser.add_argument('--subjects', nargs='+',
                         help='subjects to run simulations on', required=True)
     parser.add_argument('--abcd_dir', default='../abcd_data',
@@ -34,8 +35,7 @@ def get_args():
     parser.add_argument('--max_SSD',
                         default=900,
                         help='max SSD of the dataset')
-    args = parser.parse_args()
-    return(args)
+    return(parser.parse_args())
 
 
 def generate_out_df(data,
@@ -163,7 +163,7 @@ if __name__ == '__main__':
                       in p_guess_df.columns}
 
     # assigned mus
-    with open('%s/assigned_mus.json' % args.abcd_dir) as json_file:
+    with open('%s/assigned_mus_%s.json' % (args.abcd_dir, args.mu_suffix)) as json_file:
         mus_dict = json.load(json_file)
 
     # exgaus sampler for guesses
@@ -175,6 +175,8 @@ if __name__ == '__main__':
     # CALCULATE SSRT
     SSDs = get_SSDs(args)
     issue_subs = []
+
+    sim_dir = args.sim_dir_base + '_' + args.mu_suffix
 
     for sub in args.subjects:
         try:
@@ -189,7 +191,7 @@ if __name__ == '__main__':
                     SSD,
                     sub_params=params)
 
-            for data_file in glob(path.join(args.sim_dir_base, 'fixed', '*%s*.csv' % sub)):
+            for data_file in glob(path.join(sim_dir, 'fixed', '*%s*.csv' % sub)):
                 sim_type = path.basename(
                     data_file
                     ).replace('.csv', '')
