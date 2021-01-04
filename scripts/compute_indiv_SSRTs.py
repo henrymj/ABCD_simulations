@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('--sim_dir_base',
                         default='../simulated_data/individual_data',
                         help='location to save simulated data')
-    parser.add_argument('--out_dir',
+    parser.add_argument('--out_dir_base',
                         default='../ssrt_metrics/individual_metrics',
                         help='location to save simulated data')
     parser.add_argument('--clip_SSDs_bool',
@@ -177,6 +177,7 @@ if __name__ == '__main__':
     issue_subs = []
 
     sim_dir = args.sim_dir_base + '_' + args.mu_suffix
+    out_dir = args.out_dir_base + '_' + args.mu_suffix
 
     for sub in args.subjects:
         try:
@@ -201,7 +202,7 @@ if __name__ == '__main__':
                                          graded_go_dict,
                                          sample_exgauss,
                                          pd.read_csv(tracked_data_file))
-                out_df.to_csv(path.join(args.out_dir, '%s.csv' % sim_type))
+                out_df.to_csv(path.join(out_dir, '%s.csv' % sim_type))
         except KeyError as err:
             print("KeyError error for sub {0}: {1}".format(sub, err))
             issue_subs.append(sub)

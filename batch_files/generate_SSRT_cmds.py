@@ -100,7 +100,7 @@ conda activate py3-env
             end_idx = start_idx + nsubs_per_job
             end_idx = min(end_idx, len(remaining_subs))
             substr = ' '.join(remaining_subs[start_idx:end_idx])
-            file_str += (f'eval "python ../../scripts/compute_indiv_SSRTs.py --mu_suffix {suffix} --abcd_dir {ABCD_LOC} --sim_dir {SIM_LOC} --out_dir {SSRT_LOC} --subjects {substr}" &\n')
+            file_str += (f'eval "python ../../scripts/compute_indiv_SSRTs.py --mu_suffix {suffix} --abcd_dir {ABCD_LOC} --sim_dir_base {SIM_LOC} --out_dir_base {SSRT_LOC} --subjects {substr}" &\n')
             nlines += 1
             if nlines == njobs_per_node:
                 with open(sher_sim_file % batch_counter, 'w') as f:
