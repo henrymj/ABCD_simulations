@@ -1,0 +1,21 @@
+#!/bin/bash
+#SBATCH --job-name=ssrt
+#SBATCH --output=.out/ssrt4.out
+#SBATCH --error=.err/ssrt4.err
+#SBATCH --time=3:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-user=henrymj@stanford.edu
+#SBATCH -N 1 # number of nodes requested - set to ceil(n rows in command script / 24)
+#SBATCH -n 3 # total number of mpi tasks requested - set to n rows in command script
+#SBATCH -p russpold,normal
+# Job Submission
+#-----------
+export PYTHONPATH=""
+
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate py3-env
+
+eval "python ../../scripts/compute_indiv_SSRTs.py --mu_suffix SSRTscale-85 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --sim_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/simulated_data/individual_data --out_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics/individual_metrics --subjects 7EZLVXDN 5E97AP49 MY1X0RAH H7TVMCPN 7J3KXGBK TDK7YAGN Z85UEYE5 UFHL6EBR DAY78DG2 5642 1KWBW4RD 5UAF6YMT H1PY8XLG 9KF0YHH2 M6VG3Z7Y H8DWLYJF 5H28NDM9 U11NYL5H 1TTVDAJ9 4F95WY7X MM3Y00ZD 60E1MMY6 LLUDJYK1 1CCL4UAD WNKZ5Z4L N8P9M0EX G0MXBE3C W4JM1V5R K5UA0808 YAVZM6F1 38ABK6X 6644W ALEZFEEH 5784LZWF PGE70ZD4 NA0D3G9K PXPY8J3A GGHP GMGNXAV7 9FNUYHC2 1F6UNTXD V0E701P6 AEMLZKT4 XVRX9PPJ L3CPPELA T5EXYEGX JPM26GH0 LV81ZJGV E5K3E4XA 66708YNC 7XUDC1NW B7A2MURD 1H7JEJW1 WM4B6L05 C3A7UBT2 43VJ4GZ1 ZN9E7J06 VKLJZA5A N6EULLPB FJ488JJY CYDU871W KFNA5PDB 05YY477E 1P4JN8JH 5C9WJ4B3 AB55U5W2 XD55JXTK GH70J8FC A3G711KJ ZCF2KY2L 5U0B0UC3 76XW5V3P" &
+eval "python ../../scripts/compute_indiv_SSRTs.py --mu_suffix SSRTscale-85 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --sim_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/simulated_data/individual_data --out_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics/individual_metrics --subjects UAG2 PMUNN8A8 DXEP8X66 3G7Z 1ENGFTE3 ZKEB Y92TEZW6 B8J23RH6 YEM9LW83 HM08N3Y0 EZWRNA3Y 7X576WFP LBWL1VE1 E3V8C4N5 71LY516E 2MMMWY0R W2W1 JXA05086 V080916L 81R15GP2 3DRFHXRC 20GGC8X5 UM3L54UF TFPAU4FF 8PM4DHGY 1NW3HM13 TFJ2LGCD HLG6NYZU LZNG6R0U H43585GP K0BCW5KA 0MCARYLD 8M1VFMR8 R2A6BKWW JPXM3ZKA 3ZHEYRWE LF021MRZ 56YTNZ4V RT64RNWZ 515PBC21 4F8LNY2K N160DMUM W35MKDP0 ZU3J1NFC KNRU5BYD 905XNJK8 L7GB4EN0 P7ZDJ6UZ Y6M92H2Y CRM6V6NX 8J86AFF3 KE8TDKAW 5XR88XGH F9LU8GW8 P9P9YUVH MJB4F3FB J1551F3N JVAW0ZW5 0H2AWWPU WXW22AJX GN54BJA4 62VXCMPT UXT483FW T9HJ5VP1 HLX109UP 5ZLLK0YM 50VKA9BE 415U67R2 DE3J6HBM K2KFJDG5 7DUJG7N2 UHUVY3KZ" &
+eval "python ../../scripts/compute_indiv_SSRTs.py --mu_suffix SSRTscale-85 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --sim_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/simulated_data/individual_data --out_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics/individual_metrics --subjects DBJ78DCD FA0DV854 VAYBMVXD 04EUBGTM 4APZUGR2 9LVF1WUU DY0X871X 8RNZXR25 G88720Z7 EPDHTY87 9WKYUT0T WM3FXZ4K WY6VZCVE HMFGD3EC E2755CEH 348PDVUL 097LUBWX 2HLV1V0P 1P29RX5F ANMZGAVD HRNYYZFN FLUR44J7 GJ344XYV LKNX6HF1 MRMZKMZ1 N6E9XK0R EV4ZUKCU NE28ULRV KTLE69Y8 X1M23RL5" &
+wait
