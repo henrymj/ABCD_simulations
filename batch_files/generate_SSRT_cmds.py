@@ -81,7 +81,11 @@ conda activate py3-env
         return '%s%s' % (stop_str_suffix, go_str_suffix)
 
     def get_remaining_subs(mu_suffix):
-        simulated_subs = get_completed_subs(SIM_LOC+'_'+mu_suffix)
+        # using tracking, but checking with fixed
+        simulated_subs = get_completed_subs(SIM_LOC+'_'+mu_suffix+'/tracking')
+        simulated_subs_fixed = get_completed_subs(SIM_LOC+'_'+mu_suffix+'/fixed')
+        assert len(simulated_subs) == len(simulated_subs_fixed)
+
         subs_w_ssrts = get_completed_subs(SSRT_LOC+'_'+mu_suffix)
         remaining_subs = set(simulated_subs).difference(subs_w_ssrts)
         assert len(remaining_subs) == (len(simulated_subs) - len(subs_w_ssrts))
@@ -119,10 +123,12 @@ conda activate py3-env
     # MAIN BODY
     for SSRT_SCALE in SSRT_SCALES:
         suffix = get_mu_suffix(SSRT_SCALE)
-        sher_file = 'batch_files/sherlock/%s/' % suffix + '/sherlock_run_ssrt_iter%d.batch'
+        print(suffix)
+        sher_file = 'sherlock/%s/' % suffix + 'sherlock_run_ssrt_iter%d.batch'
         make_sherlock_ssrt_batch_files(sher_file, suffix)
 
     # Single Individual Case
     suffix_noVar = get_mu_suffix(0, 0)
-    sher_file = 'batch_files/sherlock/%s/' % suffix_noVar + '/sherlock_run_ssrt_iter%d.batch'
+    print(suffix_noVar)
+    sher_file = 'sherlock/%s/' % suffix_noVar + 'sherlock_run_ssrt_iter%d.batch'
     make_sherlock_ssrt_batch_files(sher_file, suffix_noVar)
