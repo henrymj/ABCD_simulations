@@ -17,6 +17,7 @@ def get_args():
                         help='choose one from [plot_ssrts,\
                               plot_inhib_func, calc_ssrts, all]',
                         type=str)
+    parser.add_argument('--mu_suffix', required=True, type=str)
     parser.add_argument('--abcd_dir', default='../abcd_data',
                         help='location of ABCD data')
     parser.add_argument('--ssrt_dir',
@@ -32,8 +33,7 @@ def get_args():
     parser.add_argument('--clipped_SSD',
                         default=500,
                         help='max SSD to use if dist is clipped')
-    args = parser.parse_args()
-    return(args)
+    return(parser.parse_args())
 
 
 def weight_ssrts(sub_df, ABCD_SSD_dists):
