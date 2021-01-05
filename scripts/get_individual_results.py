@@ -21,10 +21,10 @@ def get_args():
                         help='location of ABCD data')
     parser.add_argument('--ssrt_dir',
                         default='../ssrt_metrics',
-                        help='location to save simulated data')
+                        help='location of ssrt metrics')
     parser.add_argument('--fig_dir',
                         default='../figures',
-                        help='location to save simulated data')
+                        help='location to save figures')
     parser.add_argument('--clip_SSDs_bool',
                         default=True,
                         help='clip fixed SSD design to clipped_SSD instead of max',
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     print('job = %s' % args.job)
 
     print('loading in data...')
-    ssrt_metrics = dd.read_csv('%s/individual_metrics/*.csv' % args.ssrt_dir,
+    ssrt_metrics = dd.read_csv('%s/individual_metrics_%s/*.csv' % (args.ssrt_dir, args.mu_suffix),
                                include_path_column='filename')
     ssrt_metrics['NARGUID'] = ssrt_metrics['filename'].apply(
         lambda x: x.split('_')[-1].replace('.csv', ''), meta=str)
@@ -102,7 +102,7 @@ if __name__ == '__main__':
                          data=subset_melt_df,
                          palette=['k', '#1f77b4', '#ff7f0e', '#2ca02c'],
                          linewidth=3)
-        plt.savefig('%s/SSRT_by_SSD_supplement.png' % args.fig_dir)
+        plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix))
 
         print('plotting SSRT by SSD...')
         fig_idx = (subset_melt_df['assumed distribution'] == 'standard') &\
@@ -116,7 +116,7 @@ if __name__ == '__main__':
             style='underlying distribution',
             data=main_fix_melt_df,
             linewidth=3)
-        plt.savefig('%s/SSRT_by_SSD.png' % args.fig_dir)
+        plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix))
 
     if args.job in ['plot_inhib_func', 'all']:
         print('plotting Inhibition Function...')
@@ -134,7 +134,7 @@ if __name__ == '__main__':
                          data=full_inhib_func_df.query('SSD <= 500').compute(),
                          linewidth=3)
         _ = plt.ylim([0, 1])
-        plt.savefig('%s/inhibition_function.png' % args.fig_dir)
+        plt.savefig('%s/%s/inhibition_function.png' % (args.fig_dir, args.mu_suffix))
 
     if args.job in ['calc_ssrts', 'all']:
         print('Calculating Expected SSRTs...')
@@ -161,4 +161,4 @@ if __name__ == '__main__':
             )
 
         print('Saving expected SSRTs')
-        pivot_ssrts.to_csv('%s/expected_ssrts.csv' % args.ssrt_dir)
+        pivot_ssrts.to_csv('%s/expected_ssrts_%s.csv' % (args.ssrt_dir, args.mu_suffix))
