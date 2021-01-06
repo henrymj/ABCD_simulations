@@ -52,7 +52,8 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
     try:
         indiv_SSRT[0][5] = sub_df.loc[sub_df.SSD == np.inf, 'standard'].values[0]
     except IndexError as err:
-        print_cols = ['SSRT	mean_SSD',
+        print_cols = ['SSRT',
+                      'mean_SSD',
                       'p_respond',
                       'max_RT',
                       'mean_go_RT',
