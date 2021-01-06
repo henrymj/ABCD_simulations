@@ -52,12 +52,26 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
     try:
         indiv_SSRT[0][5] = sub_df.loc[sub_df.SSD == np.inf, 'standard'].values[0]
     except IndexError as err:
-        print("Index Error: {0}".format(err))
-        print(sub)
-        print(sub_df['underlying distribution'].unique()[0])
-        print(len(sub_df))
-        print(sub_df.tail())
-        raise
+        print_cols = ['SSRT	mean_SSD',
+                      'p_respond',
+                      'max_RT',
+                      'mean_go_RT',
+                      'mean_stopfail_RT',
+                      'SSD',
+                      'SSRT_w_guesses',
+                      'SSRT_w_graded']
+        print(
+            "Index Error for sub '{0}', underlying gen '{1}', len {2}: {3}".format(
+                sub,
+                sub_df['underlying distribution'].unique()[0],
+                len(sub_df),
+                err
+                )
+            )
+        print(sub_df[[print_cols]].tail())
+        print(sub_df.loc[sub_df.SSD == np.inf, print_cols])
+        print('setting to NaN')
+        indiv_SSRT[0][5] = np.nan
 
     return pd.DataFrame(indiv_SSRT,
                         columns=['standard',
