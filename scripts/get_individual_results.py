@@ -49,7 +49,16 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
         indiv_SSRT[0][:4] += ssd_SSRTs * weight
     # append fixed, tracked
     indiv_SSRT[0][4] = sub_df.loc[sub_df.SSD == -np.inf, 'standard'].values[0]
-    indiv_SSRT[0][5] = sub_df.loc[sub_df.SSD == np.inf, 'standard'].values[0]
+    try:
+        indiv_SSRT[0][5] = sub_df.loc[sub_df.SSD == np.inf, 'standard'].values[0]
+    except IndexError as err:
+        print("Index Error: {0}".format(err))
+        print(sub)
+        print(sub_df['underlying distribution'].unique()[0])
+        print(len(sub_df))
+        print(sub_df.tail())
+        raise
+
     return pd.DataFrame(indiv_SSRT,
                         columns=['standard',
                                  'guesses',
@@ -67,7 +76,9 @@ if __name__ == '__main__':
 
     print('loading in data...')
     ssrt_metrics = dd.read_csv('%s/individual_metrics_%s/*.csv' % (args.ssrt_dir, args.mu_suffix),
-                               include_path_column='filename')
+                               include_path_column='filename',
+                               dtype={'Unnamed: 0': 'float64',
+                                      'omission_count': 'float64'})
     ssrt_metrics['NARGUID'] = ssrt_metrics['filename'].apply(
         lambda x: x.split('_')[-1].replace('.csv', ''), meta=str)
     ssrt_metrics['underlying distribution'] = ssrt_metrics['filename'].apply(
@@ -78,7 +89,6 @@ if __name__ == '__main__':
         columns={'SSRT': 'standard',
                  'SSRT_w_guesses': 'guesses',
                  'SSRT_w_graded': 'graded_go'})
-
     print('melting...')
     melt_df = dd.melt(ssrt_metrics,
                       id_vars=['SSD', 'underlying distribution'],
