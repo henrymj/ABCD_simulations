@@ -3,6 +3,7 @@ simulated_data/
 simulated_data/*.csv
 simulated_data/individual_data/*.csv
 ssrt_metrics/individual_metrics*
+!ssrt_metrics/individual_metrics_SSRTscale-0_RTscale-0/guesses_LMME1BK2.csv
 ssrt_metrics/old_metrics
 !ssrt_metrics/expected_ssrts.csv
 !abcd_data/assigned_mus*.json
