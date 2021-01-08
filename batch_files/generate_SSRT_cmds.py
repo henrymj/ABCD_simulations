@@ -48,7 +48,7 @@ def get_completed_subs(dir_path):
 if __name__ == '__main__':
 
     # CONSTANTS
-    SSRT_SCALES = [85, 25, 0]
+    SSRT_SCALES = [85, 25, 5, 0]
 
     sher_header = '''#!/bin/bash
 #SBATCH --job-name=ssrt
