@@ -148,9 +148,10 @@ if __name__ == '__main__':
             [ssrt_metrics[abcd_inhib_func_per_sub.columns],
              abcd_inhib_func_per_sub],
             0)
+        full_inhib_func_df['P(respond|signal)'] = full_inhib_func_df['p_respond']
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
         _ = sns.lineplot(x='SSD',
-                         y='p_respond',
+                         y='P(respond|signal)',
                          color='k',
                          style='underlying distribution',
                          data=full_inhib_func_df.query('SSD <= 500').compute(),
