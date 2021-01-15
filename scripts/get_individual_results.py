@@ -103,8 +103,8 @@ if __name__ == '__main__':
     # Formal Names
     renaming_map = {'standard': 'Independent Race',
                     'guesses': 'Guessing',
-                    'slowed_go': 'Slowed Go Processing',
-                    'slowed_both': 'Confusion'}
+                    'graded_go': 'Slowed Go Processing',
+                    'graded_both': 'Confusion'}
     melt_df["assumed distribution"] = melt_df["assumed distribution"].replace(renaming_map)
     melt_df["underlying distribution"] = melt_df["underlying distribution"].replace(renaming_map)
 
