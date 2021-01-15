@@ -105,8 +105,8 @@ if __name__ == '__main__':
                     'guesses': 'Guessing',
                     'slowed_go': 'Slowed Go Processing',
                     'slowed_both': 'Confusion'}
-    melt_df["assumed distribution"].replace(renaming_map, inplace=True)
-    melt_df["underlying distribution"].replace(renaming_map, inplace=True)
+    melt_df["assumed distribution"] = melt_df["assumed distribution"].replace(renaming_map)
+    melt_df["underlying distribution"] = melt_df["underlying distribution"].replace(renaming_map)
 
     if args.job in ['plot_ssrts', 'all']:
         print('plotting SSRT by SSD Supplement...')
