@@ -104,7 +104,8 @@ if __name__ == '__main__':
     renaming_map = {'standard': 'Independent Race',
                     'guesses': 'Guessing',
                     'graded_go': 'Slowed Go Processing',
-                    'graded_both': 'Confusion'}
+                    'graded_both': 'Confusion',
+                    'ABCD data': 'ABCD Data'}
     melt_df["assumed distribution"] = melt_df["assumed distribution"].replace(renaming_map)
     melt_df["underlying distribution"] = melt_df["underlying distribution"].replace(renaming_map)
 
@@ -149,6 +150,8 @@ if __name__ == '__main__':
              abcd_inhib_func_per_sub],
             0)
         full_inhib_func_df['P(respond|signal)'] = full_inhib_func_df['p_respond']
+        full_inhib_func_df["underlying distribution"] = full_inhib_func_df["underlying distribution"].replace(renaming_map)
+        print(full_inhib_func_df.head(10))
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
         _ = sns.lineplot(x='SSD',
                          y='P(respond|signal)',
