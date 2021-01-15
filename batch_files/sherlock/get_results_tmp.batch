@@ -1,0 +1,25 @@
+#!/bin/bash
+#SBATCH --job-name=results
+#SBATCH --output=.out/results.out
+#SBATCH --error=.err/results.err
+#SBATCH --time=6:00:00
+#SBATCH --mail-type=END
+#SBATCH --mail-user=henrymj@stanford.edu
+
+#SBATCH -N 1
+#SBATCH -n 5
+#SBATCH -p russpold,hns
+#SBATCH --exclude=sh02-06n01,sh02-06n02
+# --cpus-per-task=16
+export PYTHONPATH=""
+
+source ~/miniconda3/etc/profile.d/conda.sh 
+conda activate py3-env
+
+
+eval "python ../../scripts/get_individual_results.py  --job plot_inhib_func --mu_suffix SSRTscale-85 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --ssrt_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics --fig_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/figures" &
+eval "python ../../scripts/get_individual_results.py  --job plot_inhib_func --mu_suffix SSRTscale-25 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --ssrt_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics --fig_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/figures" &
+eval "python ../../scripts/get_individual_results.py  --job plot_inhib_func --mu_suffix SSRTscale-5 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --ssrt_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics --fig_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/figures" &
+eval "python ../../scripts/get_individual_results.py  --job plot_inhib_func --mu_suffix SSRTscale-0 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --ssrt_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics --fig_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/figures" &
+eval "python ../../scripts/get_individual_results.py  --job plot_inhib_func --mu_suffix SSRTscale-0_RTscale-0 --abcd_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/abcd_data --ssrt_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/ssrt_metrics --fig_dir /oak/stanford/groups/russpold/users/henrymj/ABCD_simulations/figures" &
+wait
