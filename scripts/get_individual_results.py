@@ -100,12 +100,19 @@ if __name__ == '__main__':
                       value_vars=['standard', 'guesses', 'graded_go', 'graded_both'],
                       var_name='assumed distribution',
                       value_name='SSRT')
+    # Formal Names
+    renaming_map = {'standard': 'Independent Race',
+                    'guesses': 'Guessing',
+                    'slowed_go': 'Slowed Go Processing',
+                    'slowed_both': 'Confusion'}
+    melt_df["assumed distribution"].replace(renaming_map, inplace=True)
+    melt_df["underlying distribution"].replace(renaming_map, inplace=True)
 
     if args.job in ['plot_ssrts', 'all']:
         print('plotting SSRT by SSD Supplement...')
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
         keep_idx = (
-            (melt_df['assumed distribution'] == 'standard') |
+            (melt_df['assumed distribution'] == 'Independent Race') |
             (melt_df['assumed distribution'] == melt_df['underlying distribution'])
             ) &\
             (melt_df['SSD'] <= 650)
@@ -120,7 +127,7 @@ if __name__ == '__main__':
         plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix), dpi=600)
 
         print('plotting SSRT by SSD...')
-        fig_idx = (subset_melt_df['assumed distribution'] == 'standard') &\
+        fig_idx = (subset_melt_df['assumed distribution'] == 'Independent Race') &\
                   (subset_melt_df['SSD'] <= 650)
         main_fix_melt_df = subset_melt_df[fig_idx]
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
