@@ -55,7 +55,7 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
         print(
             "Index Error for sub '{0}', underlying gen '{1}', len {2}: {3}".format(
                 sub,
-                sub_df['underlying distribution'].unique()[0],
+                sub_df['Underlying Distribution'].unique()[0],
                 len(sub_df),
                 err
                 )
@@ -86,7 +86,7 @@ if __name__ == '__main__':
                                       'omission_count': 'float64'})
     ssrt_metrics['NARGUID'] = ssrt_metrics['filename'].apply(
         lambda x: x.split('_')[-1].replace('.csv', ''), meta=str)
-    ssrt_metrics['underlying distribution'] = ssrt_metrics['filename'].apply(
+    ssrt_metrics['Underlying Distribution'] = ssrt_metrics['filename'].apply(
         lambda x: '_'.join(x.split('/')[-1].split('_')[:-1]), meta=str)
     ssrt_metrics = ssrt_metrics.drop('filename', axis=1)
     ssrt_metrics['graded_both'] = ssrt_metrics['SSRT_w_graded']
@@ -96,9 +96,9 @@ if __name__ == '__main__':
                  'SSRT_w_graded': 'graded_go'})
     print('melting...')
     melt_df = dd.melt(ssrt_metrics,
-                      id_vars=['SSD', 'underlying distribution'],
+                      id_vars=['SSD', 'Underlying Distribution'],
                       value_vars=['standard', 'guesses', 'graded_go', 'graded_both'],
-                      var_name='assumed distribution',
+                      var_name='Assumed Distribution',
                       value_name='SSRT')
     # Formal Names
     renaming_map = {'standard': 'Independent Race',
@@ -106,29 +106,29 @@ if __name__ == '__main__':
                     'graded_go': 'Slowed Go Processing',
                     'graded_both': 'Confusion',
                     'ABCD data': 'ABCD Data'}
-    melt_df["assumed distribution"] = melt_df["assumed distribution"].replace(renaming_map)
-    melt_df["underlying distribution"] = melt_df["underlying distribution"].replace(renaming_map)
-
+    melt_df["Assumed Distribution"] = melt_df["Assumed Distribution"].replace(renaming_map)
+    melt_df["Underlying Distribution"] = melt_df["Underlying Distribution"].replace(renaming_map)
+    melt_df = melt_df.sort_values(by=['Underlying Distribution', 'Assumed Distribution'])
     if args.job in ['plot_ssrts', 'all']:
         print('plotting SSRT by SSD Supplement...')
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
         keep_idx = (
-            (melt_df['assumed distribution'] == 'Independent Race') |
-            (melt_df['assumed distribution'] == melt_df['underlying distribution'])
+            (melt_df['Assumed Distribution'] == 'Independent Race') |
+            (melt_df['Assumed Distribution'] == melt_df['Underlying Distribution'])
             ) &\
             (melt_df['SSD'] <= 650)
         subset_melt_df = melt_df[keep_idx].compute()
         _ = sns.lineplot(x='SSD',
                          y='SSRT',
-                         hue='assumed distribution',
-                         style='underlying distribution',
+                         hue='Assumed Distribution',
+                         style='Underlying Distribution',
                          data=subset_melt_df,
                          palette=['k', '#1f77b4', '#ff7f0e', '#2ca02c'],
                          linewidth=3)
-        plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix), dpi=600)
+        plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
         print('plotting SSRT by SSD...')
-        fig_idx = (subset_melt_df['assumed distribution'] == 'Independent Race') &\
+        fig_idx = (subset_melt_df['Assumed Distribution'] == 'Independent Race') &\
                   (subset_melt_df['SSD'] <= 650)
         main_fix_melt_df = subset_melt_df[fig_idx]
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
@@ -136,31 +136,33 @@ if __name__ == '__main__':
             x='SSD',
             y='SSRT',
             color='k',
-            style='underlying distribution',
+            style='Underlying Distribution',
             data=main_fix_melt_df,
             linewidth=3)
-        plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix), dpi=600)
+        plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
     if args.job in ['plot_inhib_func', 'all']:
         print('plotting Inhibition Function...')
         abcd_inhib_func_per_sub = dd.read_csv(
             '%s/abcd_inhib_func_per_sub.csv' % args.abcd_dir)
+        abcd_inhib_func_per_sub = abcd_inhib_func_per_sub.rename({'underlying distribution': 'Underlying Distribution'})
         full_inhib_func_df = dd.concat(
             [ssrt_metrics[abcd_inhib_func_per_sub.columns],
              abcd_inhib_func_per_sub],
             0)
         full_inhib_func_df['P(respond|signal)'] = full_inhib_func_df['p_respond']
-        full_inhib_func_df["underlying distribution"] = full_inhib_func_df["underlying distribution"].replace(renaming_map)
-        print(full_inhib_func_df.head(10))
+        full_inhib_func_df["Underlying Distribution"] = full_inhib_func_df["Underlying Distribution"].replace(renaming_map)
+        full_inhib_func_df = full_inhib_func_df.sort_values(by=['Underlying Distribution'])
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
         _ = sns.lineplot(x='SSD',
                          y='P(respond|signal)',
                          color='k',
-                         style='underlying distribution',
+                         style='Underlying Distribution',
                          data=full_inhib_func_df.query('SSD <= 500').compute(),
-                         linewidth=3)
+                         linewidth=5)
+        plt.legend(fontsize='large', title_fontsize='large')
         _ = plt.ylim([0, 1])
-        plt.savefig('%s/%s/inhibition_function.png' % (args.fig_dir, args.mu_suffix), dpi=600)
+        plt.savefig('%s/%s/inhibition_function.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
     if args.job in ['calc_ssrts', 'all']:
         print('Calculating Expected SSRTs...')
@@ -174,7 +176,7 @@ if __name__ == '__main__':
 
         print('Running the Dask Computation...')
         expected_ssrts = ssrt_metrics.compute().groupby(
-            ['NARGUID', 'underlying distribution']
+            ['NARGUID', 'Underlying Distribution']
             ).apply(lambda x: weight_ssrts(x, ABCD_SSD_dists))
 
         expected_ssrts = expected_ssrts.reset_index()
@@ -182,7 +184,7 @@ if __name__ == '__main__':
 
         pivot_ssrts = expected_ssrts.pivot(
             index='NARGUID',
-            columns='underlying distribution',
+            columns='Underlying Distribution',
             values=['standard', 'guesses', 'graded_go', 'graded_both', 'fixed', 'tracking']
             )
 
