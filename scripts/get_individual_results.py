@@ -153,7 +153,7 @@ if __name__ == '__main__':
         print('plotting Inhibition Function...')
         abcd_inhib_func_per_sub = dd.read_csv(
             '%s/abcd_inhib_func_per_sub.csv' % args.abcd_dir)
-        abcd_inhib_func_per_sub = abcd_inhib_func_per_sub.rename({'underlying distribution': 'Underlying Distribution'})
+        abcd_inhib_func_per_sub = abcd_inhib_func_per_sub.rename(columns={'underlying distribution': 'Underlying Distribution'})
         full_inhib_func_df = dd.concat(
             [ssrt_metrics[abcd_inhib_func_per_sub.columns],
              abcd_inhib_func_per_sub],
