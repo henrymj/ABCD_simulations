@@ -108,7 +108,12 @@ if __name__ == '__main__':
                     'ABCD data': 'ABCD Data'}
     melt_df["Assumed Distribution"] = melt_df["Assumed Distribution"].replace(renaming_map)
     melt_df["Underlying Distribution"] = melt_df["Underlying Distribution"].replace(renaming_map)
-    melt_df = melt_df.sort_values(by=['Underlying Distribution', 'Assumed Distribution'])
+
+    style_order = ['ABCD Data',
+                   'Confusion',
+                   'Guessing',
+                   'Independent Race',
+                   'Slowed Go Processing']
     if args.job in ['plot_ssrts', 'all']:
         print('plotting SSRT by SSD Supplement...')
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
@@ -118,10 +123,12 @@ if __name__ == '__main__':
             ) &\
             (melt_df['SSD'] <= 650)
         subset_melt_df = melt_df[keep_idx].compute()
+        subset_melt_df = subset_melt_df.sort_values(by=['Underlying Distribution', 'Assumed Distribution'])
         _ = sns.lineplot(x='SSD',
                          y='SSRT',
                          hue='Assumed Distribution',
                          style='Underlying Distribution',
+                         style_order=style_order,
                          data=subset_melt_df,
                          palette=['k', '#1f77b4', '#ff7f0e', '#2ca02c'],
                          linewidth=3)
@@ -137,6 +144,7 @@ if __name__ == '__main__':
             y='SSRT',
             color='k',
             style='Underlying Distribution',
+            style_order=style_order,
             data=main_fix_melt_df,
             linewidth=3)
         plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix), dpi=400)
@@ -152,13 +160,15 @@ if __name__ == '__main__':
             0)
         full_inhib_func_df['P(respond|signal)'] = full_inhib_func_df['p_respond']
         full_inhib_func_df["Underlying Distribution"] = full_inhib_func_df["Underlying Distribution"].replace(renaming_map)
-        full_inhib_func_df = full_inhib_func_df.sort_values(by=['Underlying Distribution'])
+        full_inhib_func_cmptd = full_inhib_func_df.query('SSD <= 500').compute()
+        full_inhib_func_cmptd = full_inhib_func_cmptd.sort_values(by=['Underlying Distribution'])
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
         _ = sns.lineplot(x='SSD',
                          y='P(respond|signal)',
                          color='k',
                          style='Underlying Distribution',
-                         data=full_inhib_func_df.query('SSD <= 500').compute(),
+                         style_order=style_order,
+                         data=full_inhib_func_cmptd,
                          linewidth=5)
         plt.legend(fontsize='large', title_fontsize='large')
         _ = plt.ylim([0, 1])
