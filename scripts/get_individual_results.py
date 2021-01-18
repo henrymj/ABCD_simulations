@@ -114,6 +114,7 @@ if __name__ == '__main__':
                    'Guessing',
                    'Independent Race',
                    'Slowed Go Processing']
+    style_order_hidden_abcd = [i for i in syle_order if i!= 'ABCD Data' else '_']
     if args.job in ['plot_ssrts', 'all']:
         print('plotting SSRT by SSD Supplement...')
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
@@ -128,9 +129,9 @@ if __name__ == '__main__':
                          y='SSRT',
                          hue='Assumed Distribution',
                          style='Underlying Distribution',
-                         style_order=style_order,
+                         style_order=style_order_hidden_abcd,
                          data=subset_melt_df,
-                         palette=['k', '#1f77b4', '#ff7f0e', '#2ca02c'],
+                         palette=['#1f77b4', 'k', '#ff7f0e', '#2ca02c'],
                          linewidth=3)
         plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
@@ -144,7 +145,7 @@ if __name__ == '__main__':
             y='SSRT',
             color='k',
             style='Underlying Distribution',
-            style_order=style_order,
+            style_order=style_order_hidden_abcd,
             data=main_fix_melt_df,
             linewidth=3)
         plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix), dpi=400)
