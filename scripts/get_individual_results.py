@@ -112,7 +112,7 @@ if __name__ == '__main__':
     style_order = ['ABCD Data',
                    'Confusion',
                    'Guessing',
-                   '_'  # skip fourth line option, is too similar to 5
+                   '_',  # skip fourth line option, is too similar to 5
                    'Independent Race',
                    'Slowed Go Processing']
     style_order_hidden_abcd = [i if i != 'ABCD Data' else '_ABCD' for i in style_order]
