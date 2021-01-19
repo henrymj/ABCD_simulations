@@ -132,7 +132,8 @@ if __name__ == '__main__':
                          style_order=style_order_hidden_abcd,
                          data=subset_melt_df,
                          palette=['#1f77b4', 'k', '#ff7f0e', '#2ca02c'],
-                         linewidth=3)
+                         linewidth=6)
+        plt.legend(fontsize='x-large', title_fontsize='x-large')
         plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
         print('plotting SSRT by SSD...')
@@ -147,7 +148,8 @@ if __name__ == '__main__':
             style='Underlying Distribution',
             style_order=style_order_hidden_abcd,
             data=main_fix_melt_df,
-            linewidth=3)
+            linewidth=6)
+        plt.legend(fontsize='x-large', title_fontsize='x-large')
         plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
     if args.job in ['plot_inhib_func', 'all']:
@@ -170,8 +172,8 @@ if __name__ == '__main__':
                          style='Underlying Distribution',
                          style_order=style_order,
                          data=full_inhib_func_cmptd,
-                         linewidth=5)
-        plt.legend(fontsize='large', title_fontsize='large')
+                         linewidth=6)
+        plt.legend(fontsize='x-large', title_fontsize='x-large')
         _ = plt.ylim([0, 1])
         plt.savefig('%s/%s/inhibition_function.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
