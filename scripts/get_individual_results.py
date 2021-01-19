@@ -114,7 +114,7 @@ if __name__ == '__main__':
                    'Guessing',
                    'Independent Race',
                    'Slowed Go Processing']
-    style_order_hidden_abcd = [i for i in syle_order if i!= 'ABCD Data' else '_']
+    style_order_hidden_abcd = [i if i!='ABCD Data' else '_ABCD' for i in style_order]
     if args.job in ['plot_ssrts', 'all']:
         print('plotting SSRT by SSD Supplement...')
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
