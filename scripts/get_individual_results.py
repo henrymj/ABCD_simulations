@@ -79,12 +79,6 @@ if __name__ == '__main__':
     plt.rc('ytick', labelsize=16)
     plt.rc('axes', labelsize=22)
 
-    # hopefully redundant function
-    def increase_ax_size(ax):
-        ax.set_xticklabels(ax.get_xticklabels(), fontsize=16)
-        ax.set_yticklabels(ax.get_yticklabels(), fontsize=16)
-        ax.yaxis.label.set_size(22)
-        ax.xaxis.label.set_size(22)
 
     print('getting args...')
     args = get_args()
@@ -145,7 +139,6 @@ if __name__ == '__main__':
                           data=subset_melt_df,
                           palette=['#1f77b4', 'k', '#ff7f0e', '#2ca02c'],
                           linewidth=6)
-        increase_ax_size(ax)
         plt.legend(fontsize='x-large', title_fontsize='x-large')
         plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
@@ -162,7 +155,6 @@ if __name__ == '__main__':
             style_order=style_order_hidden_abcd,
             data=main_fix_melt_df,
             linewidth=6)
-        increase_ax_size(ax)
         plt.legend(fontsize='x-large', title_fontsize='x-large')
         plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
