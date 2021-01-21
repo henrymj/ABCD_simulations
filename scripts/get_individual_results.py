@@ -75,6 +75,17 @@ def weight_ssrts(sub_df, ABCD_SSD_dists):
 
 # In[3]:
 if __name__ == '__main__':
+    plt.rc('xtick', labelsize=16)
+    plt.rc('ytick', labelsize=16)
+    plt.rc('axes', labelsize=22)
+
+    # hopefully redundant function
+    def increase_ax_size(ax):
+        ax.set_xticklabels(ax.get_xticklabels(), fontsize=16)
+        ax.set_yticklabels(ax.get_yticklabels(), fontsize=16)
+        ax.yaxis.label.set_size(22)
+        ax.xaxis.label.set_size(22)
+
     print('getting args...')
     args = get_args()
     print('job = %s' % args.job)
@@ -126,14 +137,15 @@ if __name__ == '__main__':
             (melt_df['SSD'] <= 650)
         subset_melt_df = melt_df[keep_idx].compute()
         subset_melt_df = subset_melt_df.sort_values(by=['Underlying Distribution', 'Assumed Distribution'])
-        _ = sns.lineplot(x='SSD',
-                         y='SSRT',
-                         hue='Assumed Distribution',
-                         style='Underlying Distribution',
-                         style_order=style_order_hidden_abcd,
-                         data=subset_melt_df,
-                         palette=['#1f77b4', 'k', '#ff7f0e', '#2ca02c'],
-                         linewidth=6)
+        ax = sns.lineplot(x='SSD',
+                          y='SSRT',
+                          hue='Assumed Distribution',
+                          style='Underlying Distribution',
+                          style_order=style_order_hidden_abcd,
+                          data=subset_melt_df,
+                          palette=['#1f77b4', 'k', '#ff7f0e', '#2ca02c'],
+                          linewidth=6)
+        increase_ax_size(ax)
         plt.legend(fontsize='x-large', title_fontsize='x-large')
         plt.savefig('%s/%s/SSRT_by_SSD_supplement.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
@@ -142,7 +154,7 @@ if __name__ == '__main__':
                   (subset_melt_df['SSD'] <= 650)
         main_fix_melt_df = subset_melt_df[fig_idx]
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
-        _ = sns.lineplot(
+        ax = sns.lineplot(
             x='SSD',
             y='SSRT',
             color='k',
@@ -150,6 +162,7 @@ if __name__ == '__main__':
             style_order=style_order_hidden_abcd,
             data=main_fix_melt_df,
             linewidth=6)
+        increase_ax_size(ax)
         plt.legend(fontsize='x-large', title_fontsize='x-large')
         plt.savefig('%s/%s/SSRT_by_SSD.png' % (args.fig_dir, args.mu_suffix), dpi=400)
 
@@ -167,13 +180,14 @@ if __name__ == '__main__':
         full_inhib_func_cmptd = full_inhib_func_df.query('SSD <= 500').compute()
         full_inhib_func_cmptd = full_inhib_func_cmptd.sort_values(by=['Underlying Distribution'])
         fig, ax = plt.subplots(1, 1, figsize=(14, 8))
-        _ = sns.lineplot(x='SSD',
-                         y='P(respond|signal)',
-                         color='k',
-                         style='Underlying Distribution',
-                         style_order=style_order,
-                         data=full_inhib_func_cmptd,
-                         linewidth=6)
+        ax = sns.lineplot(x='SSD',
+                          y='P(respond|signal)',
+                          color='k',
+                          style='Underlying Distribution',
+                          style_order=style_order,
+                          data=full_inhib_func_cmptd,
+                          linewidth=6)
+        increase_ax_size(ax)
         plt.legend(fontsize='x-large', title_fontsize='x-large')
         _ = plt.ylim([0, 1])
         plt.savefig('%s/%s/inhibition_function.png' % (args.fig_dir, args.mu_suffix), dpi=400)
