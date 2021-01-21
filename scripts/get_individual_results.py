@@ -79,7 +79,6 @@ if __name__ == '__main__':
     plt.rc('ytick', labelsize=16)
     plt.rc('axes', labelsize=22)
 
-
     print('getting args...')
     args = get_args()
     print('job = %s' % args.job)

@@ -56,7 +56,7 @@ It edits `batch_files/sherlock/SSRTscale-*/sherlock_run_sims_iter*.batch` for ru
   
 2. Simulating:   
 In `batch_files/sherlock`, run `bash simulate_individuals.sh`. This will run `simulate_individuals.py` through the intermediary batch files that are edited above. 
-- After the simulations finish, in `batch_files/`, run `python generate_remaining_sim_cmds.py` to look for subs that did not complete the simulations (due to time or resource limits) and edit the batch files again, though this should not occur and is just for concenience.
+- After the simulations finish, in `batch_files/`, run `python generate_remaining_sim_cmds.py` to look for subs that did not complete the simulations (due to time or resource limits) and edit the batch files again, though this should not occur and is just for convenience.
 
 3. Computing SSRTs:  
 In `batch_files/`, run `python generate_SSRT_cmds.py` to find subjects that have been simulated but don't have ssrt files. It edits `batch_files/sherlock/SSRTscale-*/sherlock_run_ssrt_iter*.batch` for running jobs on Sherlock. In `batch_files/sherlock`, run `bash compute_ssrts.sh` which will read run `compute_indiv_SSRTs.py` through the intermediary batch files above, computing SSRTs and getting related metrics per SSD per simulation type x SSRT assumption. 
