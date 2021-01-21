@@ -179,7 +179,6 @@ if __name__ == '__main__':
                           style_order=style_order,
                           data=full_inhib_func_cmptd,
                           linewidth=6)
-        increase_ax_size(ax)
         plt.legend(fontsize='x-large', title_fontsize='x-large')
         _ = plt.ylim([0, 1])
         plt.savefig('%s/%s/inhibition_function.png' % (args.fig_dir, args.mu_suffix), dpi=400)
