@@ -47,6 +47,7 @@ The notebooks at the top level compute or display all numbers referenced in the 
 - `2results_across_SSRTscales.ipynb` shows the correlations between SSRTs for generating table 1 and comparing the interaction between the ABCD stop task's design issues and the underlying variance in SSRT variance.
 
 ## Running Pipeline:
+*Note: the SSRT analyses rely on `stopsignalmetrics` (https://doi.org/10.5281/zenodo.4458764), a Poldrack lab python package for standard analyses of stop signal datasets, including SSRT calculation.
 
 0. The most important files are located in `scripts/`: `simulate_individuals.py`, `compute_indiv_SSRTs.py`, `get_individual_results.py`, and `utils.py`.
 
